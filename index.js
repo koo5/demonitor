@@ -36,7 +36,7 @@ async function run()
 
 	const ipfs = await IPFS.create(ipfsOptions)
 	//await ipfs.config.profiles.apply('lowpower')
-	ipfs.swarm.connect(bootstrap[0]);
+	//ipfs.swarm.connect(bootstrap[0]);
 
 
 	const identity = await Identities.createIdentity({id: 'test1'})
