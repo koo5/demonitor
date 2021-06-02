@@ -67,7 +67,20 @@ async function run()
 	{
 		await print_items(db)
 	})
-	db.events.on('peer', (peer) => console.log(peer))
+
+
+
+	db.events.on('replicated', (address) => console.log('replicated') )
+	db.events.on('replicate', (address) => console.log('replicate') )
+	db.events.on('replicate.progress', (address, hash, entry, progress, have) => console.log('replicate.progress') )
+	db.events.on('load', (dbname) => console.log('load') )
+	db.events.on('load.progress', (address, hash, entry, progress, total) => console.log('load.progress') )
+	db.events.on('ready', (dbname, heads) => console.log('ready') )
+	db.events.on('write', (address, entry, heads) => console.log('write') )
+	db.events.on('peer', (peer) => console.log('peer') )
+	db.events.on('closed', (dbname) => console.log('closed') )
+	db.events.on('peer.exchanged', (peer, address, heads) => console.log('peer.exchanged') )
+
 }
 
 async function print_items(db)
