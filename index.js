@@ -69,12 +69,7 @@ async function run()
 	console.log()
 	await print_items(db);
 	// https://github.com/orbitdb/orbit-db/blob/main/API.md#replicated
-	db.events.on('replicated', (address) => print_items())
-	db.events.on('replicated', async (address) =>
-	{
-		await print_items(db)
-	})
-
+	db.events.on('replicated', (address) => print_items(db))
 
 
 	db.events.on('replicated', async (address) => {console.log('replicated'); await print_items(db);} )
