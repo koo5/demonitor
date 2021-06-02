@@ -26,13 +26,17 @@ async function run()
 			pubsub: true
 		},
 		// https://github.com/ipfs/js-ipfs/blob/7cf404c8fd11888fa803c6167bd2ec62d94a2b34/docs/CONFIG.md#addresses
-		config: {Bootstrap: bootstrap},
+		config: {
+			//Bootstrap: bootstrap
+
+		},
 		repo: './ipfs'
 	}
 
 
 	const ipfs = await IPFS.create(ipfsOptions)
 	//await ipfs.config.profiles.apply('lowpower')
+	ipfs.swarm.connect(bootstrap[0]);
 
 
 	const identity = await Identities.createIdentity({id: 'test1'})
@@ -50,7 +54,7 @@ async function run()
 		{
 			accessController: {
 				type: 'orbitdb', //OrbitDBAccessController
-				write: ['*']
+				write: ['*'] //       write: [orbitdb.identity.id]
 			}
 		}
 	)
@@ -81,6 +85,13 @@ async function run()
 	db.events.on('closed', (dbname) => console.log('closed') )
 	db.events.on('peer.exchanged', (peer, address, heads) => console.log('peer.exchanged') )
 
+	setInterval(async () => await beep(ipfs), 1000);
+
+}
+
+async function beep(ipfs)
+{
+	console.log( await ipfs.swarm.peers());
 }
 
 async function print_items(db)
