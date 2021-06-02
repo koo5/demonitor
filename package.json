@@ -1,0 +1,17 @@
+{
+  "name": "demonitor",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "archieml": "^0.4.2",
+    "ipfs": "^0.55.2",
+    "node-gyp": "^8.1.0",
+    "orbit-db": "^0.26.1"
+  },
+  "description": ""
+}
