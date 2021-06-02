@@ -34,6 +34,7 @@ const ipfsOptions = {
 	
 	const identity = await Identities.createIdentity( { id: 'test1' })
 	
+	console.log()
 	console.log('publicKey:')
 	console.log(identity.publicKey)
 
@@ -53,14 +54,17 @@ const ipfsOptions = {
 	
 	await db.add({ creator: identity.publicKey })
 
-	await print_items();
+	console.log()
+	await print_items(db);
+	// https://github.com/orbitdb/orbit-db/blob/main/API.md#replicated
 	db.events.on('replicated', (address) => print_items())
-	db.events.on('replicated', (address) => await print_items())
-		
+	db.events.on('replicated', async (address) => {await print_items(db)})
+	db.events.on('peer', (peer) => console.log(peer))
 }
 
-async function print_items()
+async function print_items(db)
 {
+	console.log()
 	console.log('items:')
 	const all = db.iterator({ limit: -1 })
 	.collect()
