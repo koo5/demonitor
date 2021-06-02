@@ -36,6 +36,7 @@ async function run()
 
 	const ipfs = await IPFS.create(ipfsOptions)
 	//await ipfs.config.profiles.apply('lowpower')
+	setInterval(async () => await beep(ipfs), 1000);
 	//ipfs.swarm.connect(bootstrap[0]);
 
 
@@ -48,6 +49,9 @@ async function run()
 
 
 	const orbitdb = await OrbitDB.createInstance(ipfs, {identity})
+	console.log()
+	console.log('orbitdb:')
+	console.log(orbitdb)
 
 
 	const db = await orbitdb.eventlog(db_address,
@@ -85,7 +89,6 @@ async function run()
 	db.events.on('closed', (dbname) => console.log('closed') )
 	db.events.on('peer.exchanged', (peer, address, heads) => console.log('peer.exchanged') )
 
-	setInterval(async () => await beep(ipfs), 1000);
 
 }
 
