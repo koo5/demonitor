@@ -27,7 +27,7 @@ async function run()
 		},
 		// https://github.com/ipfs/js-ipfs/blob/7cf404c8fd11888fa803c6167bd2ec62d94a2b34/docs/CONFIG.md#addresses
 		config: {
-			//Bootstrap: bootstrap
+			Bootstrap: bootstrap
 
 		},
 		repo: './ipfs'
