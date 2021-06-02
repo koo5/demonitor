@@ -10,6 +10,7 @@
   "dependencies": {
     "archieml": "^0.4.2",
     "ipfs": "^0.55.2",
+    "moment": "^2.29.1",
     "node-gyp": "^8.1.0",
     "orbit-db": "^0.26.1"
   },

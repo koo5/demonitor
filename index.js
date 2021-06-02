@@ -3,6 +3,7 @@ var archieml = require('archieml');
 const IPFS = require('ipfs')
 const OrbitDB = require('orbit-db')
 const Identities = require('orbit-db-identity-provider')
+var moment = require('moment');
 
 
 async function run()
@@ -36,7 +37,7 @@ async function run()
 
 	const ipfs = await IPFS.create(ipfsOptions)
 	//await ipfs.config.profiles.apply('lowpower')
-	setInterval(async () => await beep(ipfs), 1000);
+
 	//ipfs.swarm.connect(bootstrap[0]);
 
 
@@ -65,8 +66,6 @@ async function run()
 	console.log('db_address:')
 	console.log(db.address.toString());
 
-	await db.add({creator: identity.publicKey})
-
 	console.log()
 	await print_items(db);
 	// https://github.com/orbitdb/orbit-db/blob/main/API.md#replicated
@@ -78,7 +77,7 @@ async function run()
 
 
 
-	db.events.on('replicated', (address) => console.log('replicated') )
+	db.events.on('replicated', async (address) => {console.log('replicated'); await print_items();} )
 	db.events.on('replicate', (address) => console.log('replicate') )
 	db.events.on('replicate.progress', (address, hash, entry, progress, have) => console.log('replicate.progress') )
 	db.events.on('load', (dbname) => console.log('load') )
@@ -89,12 +88,13 @@ async function run()
 	db.events.on('closed', (dbname) => console.log('closed') )
 	db.events.on('peer.exchanged', (peer, address, heads) => console.log('peer.exchanged') )
 
-
+	setInterval(async () => await beep(ipfs,db), 1000);
 }
 
-async function beep(ipfs)
+async function beep(ipfs, db)
 {
 	console.log( 'beep');
+	await db.add({ts:moment().format()})
 	console.log( await ipfs.swarm.peers());
 }
 
