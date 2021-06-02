@@ -7,12 +7,18 @@ const Identities = require('orbit-db-identity-provider')
 
 async function run()
 {
+	const config_fn = 'config.aml';
+	console.log(config_fn+' :');
 	const config_text = fs.readFileSync('config.aml').toString();
 	console.log(config_text);
 	const config = archieml.load(config_text);
 	const db_address = config.db_address || 'monitoringing';
 	const bootstrap = config.bootstrap || [];
 
+
+	console.log('bootstrap:')
+	console.log(bootstrap)
+	console.log()
 
 	// https://github.com/ipfs/js-ipfs/blob/7cf404c8fd11888fa803c6167bd2ec62d94a2b34/docs/MODULE.md
 	const ipfsOptions = {
@@ -34,6 +40,7 @@ async function run()
 	console.log()
 	console.log('publicKey:')
 	console.log(identity.publicKey)
+	console.log(identity)
 
 
 	const orbitdb = await OrbitDB.createInstance(ipfs, {identity})
