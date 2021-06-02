@@ -46,13 +46,13 @@ async function run()
 	console.log()
 	console.log('publicKey:')
 	console.log(identity.publicKey)
-	console.log(identity)
+	//console.log(identity)
 
 
 	const orbitdb = await OrbitDB.createInstance(ipfs, {identity})
-	console.log()
+	/*console.log()
 	console.log('orbitdb:')
-	console.log(orbitdb)
+	console.log(orbitdb)*/
 
 
 	const db = await orbitdb.eventlog(db_address,
@@ -77,7 +77,7 @@ async function run()
 
 
 
-	db.events.on('replicated', async (address) => {console.log('replicated'); await print_items();} )
+	db.events.on('replicated', async (address) => {console.log('replicated'); await print_items(db);} )
 	db.events.on('replicate', (address) => console.log('replicate') )
 	db.events.on('replicate.progress', (address, hash, entry, progress, have) => console.log('replicate.progress') )
 	db.events.on('load', (dbname) => console.log('load') )
@@ -88,7 +88,7 @@ async function run()
 	db.events.on('closed', (dbname) => console.log('closed') )
 	db.events.on('peer.exchanged', (peer, address, heads) => console.log('peer.exchanged') )
 
-	setInterval(async () => await beep(ipfs,db), 1000);
+	setInterval(async () => await beep(ipfs,db), 5000);
 }
 
 async function beep(ipfs, db)
