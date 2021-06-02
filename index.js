@@ -91,6 +91,7 @@ async function run()
 
 async function beep(ipfs)
 {
+	console.log( 'beep');
 	console.log( await ipfs.swarm.peers());
 }
 
