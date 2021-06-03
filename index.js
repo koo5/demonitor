@@ -13,13 +13,22 @@ async function run()
 	const config_text = fs.readFileSync('config.aml').toString();
 	console.log(config_text);
 	const config = archieml.load(config_text);
-	const db_address = config.db_address || 'monitoringing';
-	const bootstrap = config.bootstrap || [];
+	const db_address = config.db_address || 'monitoringing2';
 
 
-	console.log('bootstrap:')
-	console.log(bootstrap)
+
+	const default_bootstrap_override = config.default_bootstrap_override;
+	console.log('default_bootstrap_override:')
+	console.log(default_bootstrap_override)
 	console.log()
+	/*
+	finishme:
+	const additional_bootstrap_nodes = config.additional_bootstrap_nodes || [];
+	console.log('additional_bootstrap_nodes:')
+	console.log(additional_bootstrap_nodes)
+	console.log()
+	 */
+
 
 	// https://github.com/ipfs/js-ipfs/blob/7cf404c8fd11888fa803c6167bd2ec62d94a2b34/docs/MODULE.md
 	const ipfsOptions = {
@@ -28,11 +37,11 @@ async function run()
 		},
 		// https://github.com/ipfs/js-ipfs/blob/7cf404c8fd11888fa803c6167bd2ec62d94a2b34/docs/CONFIG.md#addresses
 		config: {
-			Bootstrap: bootstrap
-
+			Bootstrap: default_bootstrap_override
 		},
 		repo: './ipfs'
 	}
+
 
 
 	const ipfs = await IPFS.create(ipfsOptions)
@@ -55,7 +64,7 @@ async function run()
 	console.log(orbitdb)*/
 
 
-	const db = await orbitdb.eventlog(db_address,
+	const db = await orbitdb.log(db_address,
 		{
 			accessController: {
 				type: 'orbitdb', //OrbitDBAccessController
@@ -68,38 +77,51 @@ async function run()
 
 	console.log()
 	await print_items(db);
+
+	db.load();
+	console.log()
+	await print_items(db);
+
+
 	// https://github.com/orbitdb/orbit-db/blob/main/API.md#replicated
-	db.events.on('replicated', (address) => print_items(db))
-
-
 	db.events.on('replicated', async (address) => {console.log('replicated'); await print_items(db);} )
-	db.events.on('replicate', (address) => console.log('replicate') )
+	db.events.on('replicate', (address) => console.log('going to replicate a part of the database with a peer...') )
 	db.events.on('replicate.progress', (address, hash, entry, progress, have) => console.log('replicate.progress') )
 	db.events.on('load', (dbname) => console.log('load') )
 	db.events.on('load.progress', (address, hash, entry, progress, total) => console.log('load.progress') )
-	db.events.on('ready', (dbname, heads) => console.log('ready') )
 	db.events.on('write', (address, entry, heads) => console.log('write') )
 	db.events.on('peer', (peer) => console.log('peer') )
 	db.events.on('closed', (dbname) => console.log('closed') )
 	db.events.on('peer.exchanged', (peer, address, heads) => console.log('peer.exchanged') )
+	db.events.on('ready', () => {
+	  console.log('database is now ready to be queried');
+	})
 
-	setInterval(async () => await beep(ipfs,db), 5000);
+	setInterval(async () => await beep(ipfs,db), 10000);
 }
 
 async function beep(ipfs, db)
 {
-	console.log( 'beep');
+	console.log( '<beep!>');
 	await db.add({ts:moment().format()})
+	console.log( 'peers:');
 	console.log( await ipfs.swarm.peers());
+	print_items(db);
 }
 
 async function print_items(db)
 {
 	console.log()
 	console.log('items:')
-	const all = db.iterator({limit: -1})
-		.collect()
-		.map((e) => console.log(e.payload.value));
+	const items = db.iterator({limit: -1}).collect();
+
+	items.map((e) => {
+		console.log({
+			source:e.identity.id,
+			value:e.payload.value
+		});
+	});
+	console.log('(' + items.length+')')
 }
 
 

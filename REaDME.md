@@ -1,3 +1,9 @@
+# bootstrapping
+
+
+
+# data format
+
 Equivalent information could be relayed in different ways:
 
 as json:
@@ -24,23 +30,3 @@ as quads in predicate-oriented way (RDF-star-ish syntax):
 	ts: 11111;
 	output: ieoeoeoeoieoeo;
 ```
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
