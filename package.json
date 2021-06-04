@@ -8,6 +8,13 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@opentelemetry/core": "^0.20.0",
+    "@opentelemetry/exporter-zipkin": "^0.20.0",
+    "@opentelemetry/instrumentation-express": "^0.16.0",
+    "@opentelemetry/instrumentation-grpc": "^0.20.0",
+    "@opentelemetry/instrumentation-http": "^0.20.0",
+    "@opentelemetry/node": "^0.20.0",
+    "@opentelemetry/tracing": "^0.20.0",
     "archieml": "^0.4.2",
     "ipfs": "^0.55.2",
     "moment": "^2.29.1",

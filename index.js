@@ -1,3 +1,14 @@
+/*
+
+we'll have to make this able to run in browser too.
+
+
+
+
+ */
+
+
+
 fs = require('fs');
 var archieml = require('archieml');
 const IPFS = require('ipfs')
@@ -46,6 +57,10 @@ async function run()
 
 	const ipfs = await IPFS.create(ipfsOptions)
 	//await ipfs.config.profiles.apply('lowpower')
+	/* or:
+	        const ipfs = IpfsApi('localhost', '5001')
+	        // If you want a programmatic way to spawn a IPFS Daemon using JavaScript, check out the ipfsd-ctl module.
+	 */
 
 	//ipfs.swarm.connect(bootstrap[0]);
 
@@ -78,7 +93,7 @@ async function run()
 	console.log()
 	await print_items(db);
 
-	db.load();
+	db.load(-1);
 	console.log()
 	await print_items(db);
 
@@ -87,9 +102,9 @@ async function run()
 	db.events.on('replicated', async (address) => {console.log('replicated'); await print_items(db);} )
 	db.events.on('replicate', (address) => console.log('going to replicate a part of the database with a peer...') )
 	db.events.on('replicate.progress', (address, hash, entry, progress, have) => console.log('replicate.progress') )
-	db.events.on('load', (dbname) => console.log('load') )
+	db.events.on('load', (dbname) => console.log('going to load the database...') )
 	db.events.on('load.progress', (address, hash, entry, progress, total) => console.log('load.progress') )
-	db.events.on('write', (address, entry, heads) => console.log('write') )
+	db.events.on('write', (address, entry, heads) => console.log('entry was added locally to the database.') )
 	db.events.on('peer', (peer) => console.log('peer') )
 	db.events.on('closed', (dbname) => console.log('closed') )
 	db.events.on('peer.exchanged', (peer, address, heads) => console.log('peer.exchanged') )
@@ -105,7 +120,7 @@ async function beep(ipfs, db)
 	console.log( '<beep!>');
 	await db.add({ts:moment().format()})
 	console.log( 'peers:');
-	console.log( await ipfs.swarm.peers());
+	console.log( await ipfs.swarm.peers({direction:true,streams:true,verbose:true,latency:true}));
 	print_items(db);
 }
 
@@ -129,3 +144,26 @@ async function print_items(db)
 {
 	await run()
 })();
+
+/*
+
+% my machines are: vmi579006, node-dev, hp, dev
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ */
