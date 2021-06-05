@@ -8,13 +8,13 @@ we'll have to make this able to run in browser too.
  */
 
 
-
 fs = require('fs');
 var archieml = require('archieml');
 const IPFS = require('ipfs')
 const OrbitDB = require('orbit-db')
 const Identities = require('orbit-db-identity-provider')
 var moment = require('moment');
+const axios = require('axios');
 
 
 async function run()
@@ -109,7 +109,8 @@ async function run()
 	db.events.on('closed', (dbname) => console.log('closed') )
 	db.events.on('peer.exchanged', (peer, address, heads) => console.log('peer.exchanged') )
 	db.events.on('ready', () => {
-	  console.log('database is now ready to be queried');
+		console.log('database is now ready to be queried');
+		initialize_checks();
 	})
 
 	setInterval(async () => await beep(ipfs,db), 10000);
@@ -142,28 +143,61 @@ async function print_items(db)
 
 (async () =>
 {
-	await run()
+	await run();
+	start_http_server();
 })();
 
-/*
 
-% my machines are: vmi579006, node-dev, hp, dev
+function start_http_server()
+{
+	const express = require('express')
+	const app = express()
+	const port = 3223
 
+	app.get('/events', (req, res) =>
+	{
+		var result = '<html><body>';
+		events.forEach((e) => {
+			result += '<pre>'
+			result += JSON.stringify(e, null, ' ');
+			result += '</pre>'
 
+		}
+		result += '</body></html>';
+		res.send(result)
+	})
 
+	app.listen(port, () =>
+	{
+		console.log(`Example app listening at http://localhost:${port}`)
+	})
+}
 
+function initialize_checks(db)
+{
+	if (env.NODE == 'azure')
+	{
+		periodic(900, {a: 'check', type: chat, target: env.VMI1});
+	}
+	if (env.NODE == 'vmi1')
+	{
+		periodic(900, {a: 'check', type: chat, target: env.AZURE});
+	}
+}
 
+function periodic(interval_seconds, task)
+{
+	setInterval(interval_seconds, async () => await do_task(task));
+}
 
+async function do_task(task)
+{
+	if (task.a == 'check')
+	{
+		if (task.type == 'chat')
+		{
+			console.log(await axios.post(task.target + '/chat', {"type":"sbe","current_state":[]}));
 
-
-
-
-
-
-
-
-
-
-
-
- */
+		}
+	}
+}
