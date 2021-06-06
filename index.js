@@ -16,8 +16,8 @@ const OrbitDB = require('orbit-db')
 const Identities = require('orbit-db-identity-provider')
 var moment = require('moment');
 const axios = require('axios');
-
-
+const cycle = require('./cycle');
+console.log(cycle)
 
 
 
@@ -32,9 +32,7 @@ const events_reversed = [];
 const events = [];
 const seen = {}
 var alerts = [];
-
-
-
+const program_start_ts = Date.now();
 
 
 
@@ -267,7 +265,7 @@ function start_http_server()
 	{
 		console.log(`Example app listening at http://localhost:${port}`)
 	})
-	console.log(`/app.listen`)
+
 }
 
 function initialize_checks()
@@ -285,11 +283,13 @@ async function do_task(task)
 	console.log(`do_task(${s(task)})`);
 	var ok = false;
 	var error;
+	var result;
 	if (task.type == 'chat')
 	{
 		try
 		{
-			const r = await axios.post(task.target + '/chat', {"type": "sbe", "current_state": []})
+			result = await axios.post(task.target + '/chat', {"type": "sbe", "current_state": []})
+			result = {status: result.status, data: result.data}
 			ok = true;
 		}
 		catch(e)
@@ -298,7 +298,7 @@ async function do_task(task)
 		}
 
 	}
-	emit_a_check_result({ok, check:task, unix_ts_ms: Date.now(), error: ss(error)});
+	emit_a_check_result({ok, check:task, unix_ts_ms: Date.now(), result: ss(result), error: ss(error)});
 }
 
 function emit_a_check_result(event)
@@ -325,20 +325,25 @@ function set_alias(alias, id)
 	node_aliases[id] =alias
 }
 
-function process_event(event)
+function process_event(entry)
 {
-	console.log(`process_event(${s(event)})`);
-	if (last_event_ts > event.payload.ts)
+	console.log(`process_event(${s(entry)})`);
+	const event = entry.payload.value;
+
+	if (last_event_ts > event.unix_ts_ms)
 		throw(xx);
+
 	if (event.type == "alias")
-		set_alias(event.alias, event.identity.id)
-	if (!seen[event.key])
+		set_alias(event.alias, entry.identity.id)
+
+	if (!seen[entry.hash])
 	{
-		events.push(event);
-		events_reversed.unshift(event);
-		seen[event.key] = true
+		events.push(entry);
+		events_reversed.unshift(entry);
+		seen[entry.hash] = true
 	}
-	event.node_alias = node_aliases[event.identity.id];
+
+	entry.node_alias = node_aliases[entry.identity.id];
 }
 
 
@@ -364,11 +369,13 @@ function review_check_results(c)
 }
 
 
-function get_last_event(check, events_reversed)
+function get_last_event(check)
 {
+	console.log(`get_last_event(${s(check)})`);
 	for (const event of events)
 	{
-		if (event.check?.id == check.id)
+		console.log(`(const ${s(event)} of events)`);
+		if (event.payload.check?.id == check.id)
 			return event;
 	}
 }
@@ -376,16 +383,18 @@ function get_last_event(check, events_reversed)
 function check_heartbeat(check)
 {
 	console.log(`check_heartbeat(${JSON.stringify(check)})`)
-	const last_event = get_last_event(check, events_reversed);
-
-	var time_since_last_event = Date.now();
+	const last_event = get_last_event(check);
+	const now = Date.now();
+	var time_since_last_event = now;
 	if (last_event)
-		time_since_last_event -= last_event.payload.unix_ts_ms;
+		time_since_last_event -= last_event.payload.value.unix_ts_ms;
 
 	const propagation_max_delay = 30000;
 	const expected_at_most_before = check.interval + propagation_max_delay;
 
-	if (time_since_last_event > expected_at_most_before)
+	const time_since_program_start = now - program_start_ts;
+
+	if (expected_at_most_before > time_since_program_start && time_since_last_event > expected_at_most_before)
 	{
 		var alert = find_heartbeat_alert(check);
 		if (!alert)
@@ -393,7 +402,9 @@ function check_heartbeat(check)
 			alerts.unshift({
 				check,
 				type: 'heartbeat_failure',
-				time_since_last_event
+				time_since_last_event,
+				last_event:last_event?.payload.value,
+				now
 			})
 		}
 		else
@@ -418,10 +429,10 @@ function find_heartbeat_alert(check)
 
 function s(x)
 {
-	return JSON.stringify(x);
+	return JSON.stringify(cycle.decycle(x));
 }
 
 function ss(x)
 {
-	return JSON.stringify(x, null, ' ');
+	return JSON.stringify(cycle.decycle(x), null, ' ');
 }
