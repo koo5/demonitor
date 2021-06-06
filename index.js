@@ -16,8 +16,6 @@ const OrbitDB = require('orbit-db')
 const Identities = require('orbit-db-identity-provider')
 var moment = require('moment');
 const axios = require('axios');
-const checker = require('checker');
-const alerter = require('alerter');
 
 
 async function run()
@@ -226,10 +224,10 @@ function start_http_server(db)
 }
 
 const checks = [
-	{node: 'dev', interval: 900, type: chat, target: process.env.VMI1},
-	{node: 'dev', interval: 900, type: chat, target: process.env.AZURE},
-	{node: 'azure', interval: 900, type: chat, target: process.env.VMI1},
-	{node: 'vmi1', interval: 900, type: chat, target: process.env.AZURE},
+	{node: 'dev', interval: 900, type: 'chat', target: process.env.VMI1},
+	{node: 'dev', interval: 900, type: 'chat', target: process.env.AZURE},
+	{node: 'azure', interval: 900, type: 'chat', target: process.env.VMI1},
+	{node: 'vmi1', interval: 900, type: 'chat', target: process.env.AZURE},
 ];
 
 function initialize_checks(db)
@@ -239,7 +237,7 @@ function initialize_checks(db)
 
 function initialize_periodic_check(task)
 {
-	setInterval(task.interval, async () => await do_task(task));
+	setInterval(async () => await do_task(task), task.interval);
 }
 
 async function do_task(task)
@@ -276,7 +274,7 @@ function start_checking_events()
 
 function start_reviewing_check_results(check)
 {
-	setInterval(check.interval, review_check_results(check))
+	setInterval(review_check_results(check), check.interval)
 }
 
 const node_ids = {}
@@ -348,9 +346,12 @@ function check_heartbeat(check)
 		{
 			alerts.unshift({
 				check_id: check.id,
-				type: 'heartbeat',
-				
+				type: 'heartbeat'
 			})
+		}
+		else
+		{
+			alert.occurence_count = (alert.occurence_count || 1) + 1;
 		}
 
 	}
@@ -362,6 +363,7 @@ function find_heartbeat_alert(check)
 	{
 		if (check.id == alert.check_id)
 			if (alert.type == 'heartbeat')
-				return alert;
+				if (!alert.is_resolved)
+					return alert;
 	}
 }
