@@ -19,7 +19,10 @@ It gives us a way to exchange blocks of data adressed by hashes. IPFS adds some 
 
 For the purposes of demonitor, blockchain isn't needed, though. We can simply trust all nodes to hold no malicious intent and always announce the tip of the linked list.
 
+After program start, the database is "loaded". Loading multiple thousand entries takes minutes.  
 
+#### log
+An immutable "event log'. You append JSON objects.
 
 
 # bootstrapping
@@ -84,17 +87,6 @@ The main (and possibly only) functionality of such an app is to alert you when i
 
 
 
-
-
-
-
-
-
-
-
-
-
-
 # browser deployment
 ## notes
 ```
@@ -105,8 +97,7 @@ https://github.com/libp2p/js-libp2p-webrtc-star
 
 
 
-
-
-
+# heartbeat
+i feel that heartbeat should be a property of individual checks, rather than of the agent itself, because an agent should be expected to be offline sometimes (for example on a suspended development computer) 
 
 
