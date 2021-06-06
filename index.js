@@ -104,7 +104,7 @@ async function run()
 	console.log('load...')
 	db.load(-1);
 	//await print_events(db);
-start_http_server(db);
+	start_http_server(db);
 
 	console.log()
 
@@ -114,15 +114,20 @@ start_http_server(db);
 	db.events.on('replicate', (address) =>
 		console.log('going to replicate a part of the database with a peer...') )
 	db.events.on('replicate.progress', (address, hash, entry, progress, have) => {
-		console.log(`replicate.progress: ${address}, ${hash}, ${JSON.stringify(entry,null,'')}, ${progress}, ${have}`) })
+		console.log(`replicate.progress: ${address}, ${hash}, ${JSON.stringify(entry,null,'')}, ${progress}, ${have}`);
+		process_event(entry);
+	})
 	db.events.on('load', (dbname) =>
 		console.log('going to load the database...') )
 	db.events.on('load.progress', (address, hash, entry, progress, total) => {
 		if (progress % 100 == 0)
 			console.log(`load.progress: ${address}, ${hash}, ${progress} of ${total}`)
+		process_event(entry);
 	})
 	db.events.on('write', (address, entry, heads) => {
-		console.log(`entry was added locally to the database: ${address}, ${JSON.stringify(entry,null,'')}, ${JSON.stringify(heads)}`) })
+		console.log(`entry was added locally to the database: ${address}, ${JSON.stringify(entry,null,'')}, ${JSON.stringify(heads)}`);
+		process_event(entry);
+	})
 	db.events.on('peer', (peer) =>
 		console.log(`peer: ${peer}`) )
 	db.events.on('closed', (dbname) =>
@@ -139,6 +144,10 @@ start_http_server(db);
 	initialize_checks();
 	setInterval(async () => await beep(ipfs,db), 30000);
 }
+
+
+
+
 
 async function beep(ipfs, db)
 {
@@ -272,12 +281,29 @@ function start_reviewing_check_results(check)
 
 const node_ids = {}
 const node_aliases = {}
+var last_event_ts;
+var events_reversed;
+const seen = {}
 
 
 function set_alias(alias, id)
 {
 	node_ids[alias] = id
 	node_aliases[id] =alias
+}
+
+function process_event(event)
+{
+	if (last_event_ts > event.payload.ts)
+		throw(xx);
+	if (event.type == "alias")
+		set_alias(event.alias, event.identity.id)
+	if (!seen[event.key])
+	{
+		events_reversed.unshift(event);
+		seen[event.key] = true
+	}
+	event.node_alias = node_aliases[event.identity.id];
 }
 
 
@@ -287,27 +313,55 @@ function review_check_results(c)
 	check1 and check2 are supposed to happen at every interval, and checker node is supposed to get the result within some propagation margin.
 	*/
 
-	for (const event of get_events())
-	{
-		if (event.type == "alias")
-			set_alias(event.alias, event.identity.id)
-	}
+	check_heartbeat(c);
 
 
-	for (const event of get_events().reverse())
+	for (const event of events_reversed)
 	{
-		const alias = node_aliases[event.identity.id];
-		if (alias == undefined)
+		if (event.node_alias == undefined)
 			continue;
-		for (const check of checks)
+		if (event.node_alias == check.node)
 		{
-			if (alias == check.node)
-			{
 
 
-			}
 		}
 	}
 }
 
 
+function get_last_event(check, events_reversed)
+{
+	for (const event of events)
+	{
+		if (event.check.id == check.id)
+			return event;
+	}
+}
+
+function check_heartbeat(check)
+{
+	const last_event = get_last_event(check, events_reversed);
+	if (last_event.payload.unix_ts_ms < Date.now() - 30000 - check.interval)
+	{
+		var alert = find_heartbeat_alert(check);
+		if (!alert)
+		{
+			alerts.unshift({
+				check_id: check.id,
+				type: 'heartbeat',
+				
+			})
+		}
+
+	}
+}
+
+function find_heartbeat_alert(check)
+{
+	for (const alert of alerts)
+	{
+		if (check.id == alert.check_id)
+			if (alert.type == 'heartbeat')
+				return alert;
+	}
+}
