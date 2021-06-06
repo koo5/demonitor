@@ -327,6 +327,7 @@ function set_alias(alias, id)
 
 function process_event(event)
 {
+	console.log(`process_event(${s(event)})`);
 	if (last_event_ts > event.payload.ts)
 		throw(xx);
 	if (event.type == "alias")
