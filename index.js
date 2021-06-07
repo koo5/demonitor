@@ -17,10 +17,10 @@ const Identities = require('orbit-db-identity-provider')
 var moment = require('moment');
 const axios = require('axios');
 const cycle = require('./cycle');
-console.log(cycle)
-
-
-
+const alertmanager_api = require('alertmanager_api');
+const am = alertmanager_api.ApiClient.instance;
+am.basePath = 'http://localhost:9093/api/v2'
+const am_aa = new alertmanager_api.AlertApi();
 
 
 var checks = [];
@@ -35,18 +35,15 @@ var alerts = [];
 const program_start_ts = Date.now();
 
 
-
 async function run()
 {
 
 
 	const config_fn = 'config.aml';
-	console.log(config_fn+' :');
+	console.log(config_fn + ' :');
 	const config_text = fs.readFileSync('config.aml').toString();
 	console.log(config_text);
 	const config = archieml.load(config_text);
-
-
 
 
 	checks = [
@@ -55,11 +52,6 @@ async function run()
 		//{id: 2, node: 'azure', interval: 9000, type: 'chat', target: process.env.VMI1},
 		//{id: 3, node: 'vmi1', interval: 9000, type: 'chat', target: process.env.AZURE},
 	];
-
-
-
-
-
 
 
 	const db_address = config.db_address || 'monitoringing2';
@@ -88,7 +80,6 @@ async function run()
 		},
 		repo: './ipfs'
 	}
-
 
 
 	const ipfs = await IPFS.create(ipfsOptions)
@@ -130,7 +121,6 @@ async function run()
 	//await print_events(db);
 
 
-
 	console.log('load...')
 	db.load(-1);
 	//await print_events(db);
@@ -139,36 +129,45 @@ async function run()
 	console.log()
 
 	// https://github.com/orbitdb/orbit-db/blob/main/API.md#replicated
-	db.events.on('replicated', async (address) => {
-		console.log('replicated'); /*await print_events(db);*/} )
+	db.events.on('replicated', async (address) =>
+	{
+		console.log('replicated'); /*await print_events(db);*/
+	})
 	db.events.on('replicate', (address) =>
-		console.log('going to replicate a part of the database with a peer...') )
-	db.events.on('replicate.progress', (address, hash, entry, progress, have) => {
-		console.log(`replicate.progress: ${address}, ${hash}, ${JSON.stringify(entry,null,'')}, ${progress}, ${have}`);
+		console.log('going to replicate a part of the database with a peer...'))
+	db.events.on('replicate.progress', (address, hash, entry, progress, have) =>
+	{
+		console.log(`replicate.progress: ${address}, ${hash}, ${JSON.stringify(entry, null, '')}, ${progress}, ${have}`);
 		process_event(entry);
 	})
 	db.events.on('load', (dbname) =>
-		console.log('going to load the database...') )
-	db.events.on('load.progress', (address, hash, entry, progress, total) => {
+		console.log('going to load the database...'))
+	db.events.on('load.progress', (address, hash, entry, progress, total) =>
+	{
 		if (progress % 100 == 0)
 			console.log(`load.progress: ${address}, ${hash}, ${progress} of ${total}`)
 		process_event(entry);
 	})
-	db.events.on('write', (address, entry, heads) => {
+	db.events.on('write', (address, entry, heads) =>
+	{
 		//console.log(`entry was added locally to the database: ${address}, ${JSON.stringify(entry,null,'')}, ${JSON.stringify(heads)}`);
 		console.log(`event was added locally to the database: ${JSON.stringify(entry.payload)}`);
 		process_event(entry);
 	})
 	db.events.on('peer', (peer) =>
-		console.log(`peer: ${peer}`) )
+		console.log(`peer: ${peer}`))
 	db.events.on('closed', (dbname) =>
-		console.log('closed') )
-	db.events.on('peer.exchanged', (peer, address, heads) => {
-		console.log(`peer.exchanged: ${peer}, ${JSON.stringify(address,null,'')}, ${heads}`) })
-	db.events.on('ready', () => {
+		console.log('closed'))
+	db.events.on('peer.exchanged', (peer, address, heads) =>
+	{
+		console.log(`peer.exchanged: ${peer}, ${JSON.stringify(address, null, '')}, ${heads}`)
+	})
+	db.events.on('ready', () =>
+	{
 		console.log('database is now ready to be queried');
 
 		start_checking_events();
+		setInterval(push_alerts_out, 1000 * 30);
 
 	})
 
@@ -177,17 +176,15 @@ async function run()
 }
 
 
-
-
-
 async function beep(ipfs)
 {
 	//console.log( '<beep!>');
 	//await db.add({ts:moment().format()})
-	const peers = await ipfs.swarm.peers({direction:true,streams:true,verbose:true,latency:true})
-	console.log( `${peers.length} peers.`);
+	const peers = await ipfs.swarm.peers({direction: true, streams: true, verbose: true, latency: true})
+	console.log(`${peers.length} peers.`);
 	//console.log( peers );
 }
+
 /*
 function get_events(db)
 {
@@ -199,13 +196,14 @@ async function print_events()
 	console.log()
 	console.log('items:')
 	//const events = get_events(db);
-	events.map((e) => {
+	events.map((e) =>
+	{
 		console.log({
-			source:e.identity.id,
-			value:e.payload.value
+			source: e.identity.id,
+			value: e.payload.value
 		});
 	});
-	console.log('(' + events.length+')')
+	console.log('(' + events.length + ')')
 }
 
 
@@ -213,7 +211,6 @@ async function print_events()
 {
 	await run();
 })();
-
 
 
 function start_http_server()
@@ -227,7 +224,8 @@ function start_http_server()
 	{
 		var result = '<html><body>';
 		//const events = get_events(db);
-		events.forEach((e) => {
+		events.forEach((e) =>
+		{
 			result += '<pre>'
 			result += JSON.stringify(e.payload.value, null, ' ');
 			result += '</pre>'
@@ -240,7 +238,8 @@ function start_http_server()
 	{
 		var result = '<html><body>';
 		//const events = get_events(db);
-		events.forEach((e) => {
+		events.forEach((e) =>
+		{
 			result += '<pre>'
 			result += JSON.stringify(e, null, ' ');
 			result += '</pre>'
@@ -252,13 +251,31 @@ function start_http_server()
 	app.get('/alerts', (req, res) =>
 	{
 		var result = '<html><body>';
-		alerts.forEach((e) => {
+		alerts.forEach((e) =>
+		{
 			result += '<pre>'
 			result += JSON.stringify(e, null, ' ');
 			result += '</pre>'
 		})
 		result += '</body></html>';
 		res.send(result)
+	})
+
+	app.get('/events_full/:hash', function (req, res)
+	{
+		var result = '<html><body>';
+		events.forEach((e) =>
+		{
+			if (e.hash == req.params.hash)
+			{
+				result += '<pre>'
+				result += ss(e);
+				result += '</pre>'
+			}
+		})
+		result += '</body></html>';
+		res.send(result)
+
 	})
 
 	app.listen(port, () =>
@@ -290,20 +307,20 @@ async function do_task(task)
 		{
 			result = await axios.post(task.target + '/chat', {"type": "sbe", "current_state": []})
 			result = {status: result.status, data: result.data}
-			ok = true;
-		}
-		catch(e)
+			if (data.status != 'error')
+				ok = true;
+		} catch (e)
 		{
 			error = e;
 		}
 
 	}
-	emit_a_check_result({ok, check:task, unix_ts_ms: Date.now(), result: ss(result), error: ss(error)});
+	emit_a_check_result({ok, check: task, unix_ts_ms: Date.now(), result: ss(result), error: ss(error)});
 }
 
 function emit_a_check_result(event)
 {
-	db.add(event)
+	db.add({type: 'check_result', ...event})
 }
 
 
@@ -314,24 +331,24 @@ function start_checking_events()
 
 function start_reviewing_check_results(check)
 {
-	setInterval(() => review_check_results(check), check.interval)
+	setInterval(() => check_heartbeat(check), check.interval)
 }
-
 
 
 function set_alias(alias, id)
 {
 	node_ids[alias] = id
-	node_aliases[id] =alias
+	node_aliases[id] = alias
 }
 
 function process_event(entry)
 {
-	console.log(`process_event(${s(entry)})`);
+	//console.log(`process_event(${s(entry)})`);
 	const event = entry.payload.value;
+	console.log(`process_event2(${s(event)})`);
 
 	if (last_event_ts > event.unix_ts_ms)
-		throw(xx);
+		throw('this shouldnt happen');
 
 	if (event.type == "alias")
 		set_alias(event.alias, entry.identity.id)
@@ -341,40 +358,42 @@ function process_event(entry)
 		events.push(entry);
 		events_reversed.unshift(entry);
 		seen[entry.hash] = true
+		process_event2(entry);
 	}
 
 	entry.node_alias = node_aliases[entry.identity.id];
 }
 
-
-function review_check_results(c)
+function process_event2(entry)
 {
-	/* checker node is supposed to be always on. azure nad vmi1 are also supposed to be always on, so,
-	check1 and check2 are supposed to happen at every interval, and checker node is supposed to get the result within some propagation margin.
-	*/
-
-	check_heartbeat(c);
-
-
-	for (const event of events_reversed)
+	const event = entry.payload.value;
+	console.log(`process_event2(${s(event)})`);
+	if (event.type == 'check_result')
 	{
-		if (event.node_alias == undefined)
-			continue;
-		if (event.node_alias == check.node)
+		const check = event.check
+		const type = 'check_failure'
+		if (!event.ok)
 		{
-
-
+			const alert = make_or_update_alert(type, check, Date.now());
+			alert.generatorURL = `/events/${entry.hash}`
+			if (alert.streak > 1)
+				alert.severity = 'critical';
+			else
+				alert.severity = 'info';
+		}
+		else
+		{
+			maybe_resolve_alert(type, check)
 		}
 	}
 }
 
-
 function get_last_event(check)
 {
-	console.log(`get_last_event(${s(check)})`);
+	//console.log(`get_last_event(${s(check)})`);
 	for (const event of events)
 	{
-		console.log(`(const ${s(event)} of events)`);
+		//console.log(`(const ${s(event)} of events)`);
 		if (event.payload.check?.id == check.id)
 			return event;
 	}
@@ -385,45 +404,66 @@ function check_heartbeat(check)
 	console.log(`check_heartbeat(${JSON.stringify(check)})`)
 	const last_event = get_last_event(check);
 	const now = Date.now();
-	var time_since_last_event = now;
-	if (last_event)
-		time_since_last_event -= last_event.payload.value.unix_ts_ms;
-
+	const time_since_program_start = now - program_start_ts;
 	const propagation_max_delay = 30000;
 	const expected_at_most_before = check.interval + propagation_max_delay;
+	var time_since_last_heartbeat = now;
+	time_since_last_heartbeat -= last_event?.payload.value.unix_ts_ms || 0;
 
-	const time_since_program_start = now - program_start_ts;
+	const type = 'heartbeat_failure';
+	const ok = time_since_last_heartbeat <= expected_at_most_before && expected_at_most_before < time_since_program_start
 
-	if (expected_at_most_before > time_since_program_start && time_since_last_event > expected_at_most_before)
+	if (ok)
 	{
-		var alert = find_heartbeat_alert(check);
-		if (!alert)
-		{
-			alerts.unshift({
-				check,
-				type: 'heartbeat_failure',
-				time_since_last_event,
-				last_event:last_event?.payload.value,
-				now
-			})
-		}
-		else
-		{
-			alert.occurence_count = (alert.occurence_count || 1) + 1;
-			alert.time_since_last_heartbeat = time_since_last_event;
-		}
-
+		const alert = make_or_update_alert(type, check, now);
+		alert.time_since_last_heartbeat = time_since_last_heartbeat;
+		alert.last_event = last_event?.payload.value || null
+	}
+	else
+	{
+		maybe_resolve_alert(type, check)
 	}
 }
 
-function find_heartbeat_alert(check)
+
+function make_or_update_alert(type, check, now)
+{
+	let alert = find_last_alert(type, check);
+	if (alert && !alert.is_resolved)
+	{
+		alert.streak = (alert.streak || 1) + 1;
+	}
+	else
+	{
+		alerts.forEach(a =>
+		{
+			if (!a.is_resolved && a.check == check && a.type == type)
+				throw('this shouldnt happen');
+		})
+		alerts.unshift({
+			generatorURL: `/checks/${check.id}`,
+			check,
+			type,
+			ts: now
+		})
+	}
+}
+
+function maybe_resolve_alert(type, check)
+{
+	const alert = find_last_alert(type, check);
+	if (alert && !alert.is_resolved)
+		alert.is_resolved = true
+}
+
+
+function find_last_alert(type, check)
 {
 	for (const alert of alerts)
 	{
-		if (check.id == alert.check_id)
-			if (alert.type == 'heartbeat')
-				if (!alert.is_resolved)
-					return alert;
+		if (check.id == alert.check.id)
+			if (alert.type == type)
+				return alert;
 	}
 }
 
@@ -436,3 +476,42 @@ function ss(x)
 {
 	return JSON.stringify(cycle.decycle(x), null, ' ');
 }
+
+
+function push_alerts_out()
+{
+	/*
+	The scheme for v2 is specified as an OpenAPI specification that can be found in the Alertmanager repository. Clients are expected to continuously re-send alerts as long as they are still active (usually on the order of 30 seconds to 3 minutes). Clients can push a list of alerts to Alertmanager via a POST request.
+	 */
+	let msg = []
+
+	alerts.forEach(alert =>
+	{
+		if (!alert.is_resolved && alert.severity != 'info')
+		{
+			msg.push(
+				{
+					"labels": {
+						"alertname": alert.type,
+						"node": alert.check.node,
+						"target": alert.check.target,
+
+					},
+					"annotations": {
+						time_since_last_heartbeat: alert.time_since_last_heartbeat,
+						ts: alert.ts,
+						streak: alert.streak
+					},
+					/*"startsAt": "<rfc3339>",
+					"endsAt": "<rfc3339>",*/
+					"generatorURL": alert.generatorURL
+				}
+			)
+
+		}
+	})
+
+	am_aa.postAlerts(msg);
+
+}
+
