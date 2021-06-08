@@ -28,6 +28,27 @@ services:
       restart_policy:
         condition: any
 
+  demonitor:
+    image: koo5/demonitor:latest
+    volumes:
+      - "ipfs:/usr/src/app/ipfs"
+      - "orbitdb:/usr/src/app/orbitdb"
+    networks:
+      - frontend
+    ports:
+      - "3223:3223"
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: any
+
 
 networks:
   frontend:
+
+
+volumes:
+  ipfs:
+  orbitdb:
+
+

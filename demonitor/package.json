@@ -1,13 +1,13 @@
 {
   "name": "demonitor",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "src/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node index.js"
   },
-  "author": "",
-  "license": "ISC",
+  "author": "koo5",
+  "license": "AGPL-3.0-or-later",
   "dependencies": {
     "alertmanager_api": "github:koo5/alertmanager_api_js",
     "archieml": "^0.4.2",
@@ -16,10 +16,11 @@
     "ipfs": "^0.55.2",
     "moment": "^2.29.1",
     "node-gyp": "^8.1.0",
+    "npm": "^7.16.0",
     "orbit-db": "^0.26.1",
     "typescript": "^4.3.2"
   },
-  "description": "",
+  "description": "run periodic checks and get alerts ... over IPFS.",
   "devDependencies": {
     "@types/node": "^8.10.66"
   }

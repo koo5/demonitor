@@ -1,7 +1,7 @@
 'use strict';
 
 
-fs = require('fs');
+var fs = require('fs');
 var archieml = require('archieml');
 const IPFS = require('ipfs')
 const OrbitDB = require('orbit-db')
@@ -9,7 +9,7 @@ const Identities = require('orbit-db-identity-provider')
 var moment = require('moment');
 const axios = require('axios');
 const cycle = require('./cycle');
-const alertmanager_api = require('alertmanager_api');
+const alertmanager_api = require('@koo5/alertmanager_api');
 const am = alertmanager_api.ApiClient.instance;
 am.basePath = 'http://localhost:9093/api/v2'
 const am_aa = new alertmanager_api.AlertApi();
