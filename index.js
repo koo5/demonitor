@@ -20,6 +20,7 @@ const cycle = require('./cycle');
 const alertmanager_api = require('alertmanager_api');
 const am = alertmanager_api.ApiClient.instance;
 am.basePath = 'http://localhost:9093/api/v2'
+//am.basePath = 'http://localhost:9093'
 const am_aa = new alertmanager_api.AlertApi();
 
 
@@ -307,7 +308,7 @@ async function do_task(task)
 		{
 			result = await axios.post(task.target + '/chat', {"type": "sbe", "current_state": []})
 			result = {status: result.status, data: result.data}
-			if (data.status != 'error')
+			if (result.status == 200 && result.data.status != 'error')
 				ok = true;
 		} catch (e)
 		{
@@ -345,7 +346,6 @@ function process_event(entry)
 {
 	//console.log(`process_event(${s(entry)})`);
 	const event = entry.payload.value;
-	console.log(`process_event2(${s(event)})`);
 
 	if (last_event_ts > event.unix_ts_ms)
 		throw('this shouldnt happen');
@@ -440,13 +440,15 @@ function make_or_update_alert(type, check, now)
 			if (!a.is_resolved && a.check == check && a.type == type)
 				throw('this shouldnt happen');
 		})
-		alerts.unshift({
+		alert = {
 			generatorURL: `/checks/${check.id}`,
 			check,
 			type,
 			ts: now
-		})
+		}
+		alerts.unshift(alert)
 	}
+	return alert
 }
 
 function maybe_resolve_alert(type, check)
@@ -478,7 +480,7 @@ function ss(x)
 }
 
 
-function push_alerts_out()
+async function push_alerts_out()
 {
 	/*
 	The scheme for v2 is specified as an OpenAPI specification that can be found in the Alertmanager repository. Clients are expected to continuously re-send alerts as long as they are still active (usually on the order of 30 seconds to 3 minutes). Clients can push a list of alerts to Alertmanager via a POST request.
@@ -490,17 +492,19 @@ function push_alerts_out()
 		if (!alert.is_resolved && alert.severity != 'info')
 		{
 			msg.push(
+				// https://prometheus.io/docs/alerting/latest/clients/#sending-alerts
 				{
 					"labels": {
 						"alertname": alert.type,
 						"node": alert.check.node,
 						"target": alert.check.target,
+						severity: alert.severity
 
 					},
 					"annotations": {
-						time_since_last_heartbeat: alert.time_since_last_heartbeat,
-						ts: alert.ts,
-						streak: alert.streak
+						time_since_last_heartbeat: ((alert.time_since_last_heartbeat)).toString(),
+						ts: (new Date(alert.ts)).toString(),
+						streak: alert.streak.toString()
 					},
 					/*"startsAt": "<rfc3339>",
 					"endsAt": "<rfc3339>",*/
@@ -511,7 +515,14 @@ function push_alerts_out()
 		}
 	})
 
-	am_aa.postAlerts(msg);
-
+	console.log(`push_alerts_out: ${s(msg)}`);
+	am_aa.postAlerts(msg, error =>
+	{
+		if (error)
+		{
+			console.log(error);
+			db.add({type: 'demonitor_warning', msg: s(error)})
+		}
+	} )
 }
 
