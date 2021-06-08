@@ -1,0 +1,34 @@
+version: '3.7'
+
+services:
+
+  am:
+    image: quay.io/prometheus/alertmanager:v0.22.0
+    networks:
+      - host
+    ports:
+      - 9093:9093
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: any
+
+  karma:
+    image: ghcr.io/prymitive/karma:v0.86
+    environment:
+      - ALERTMANAGER_URI=http://localhost:3223
+    networks:
+      - host
+    ports:
+      - "9094:8080"
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: any
+
+
+networks:
+  host:
+    external: true
+    name: host
+  
