@@ -5,8 +5,12 @@ https://github.com/open-telemetry/opentelemetry-collector/blob/main/exporter/REA
 
 
 
+
+
+# openapi
  npm install oazapfts
  node_modules/.bin/oazapfts https://raw.githubusercontent.com/prometheus/alertmanager/master/api/v2/openapi.yaml alertmanager.ts
+^ i didnt have much luck with compiling the ts.
 
 
-q
+

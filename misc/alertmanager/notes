@@ -1,0 +1,3 @@
+
+ 
+./karma  --alertmanager.uri http://localhost:9093 --ui.refresh 3s --alertmanager.interval 3s --listen.prefix /karma

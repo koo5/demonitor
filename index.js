@@ -169,7 +169,7 @@ async function run()
 		console.log('database is now ready to be queried');
 
 		start_checking_events();
-		setInterval(push_alerts_out, 1000 * 5);
+		setInterval(push_alerts_out, 1000 * 15);
 
 	})
 
@@ -299,6 +299,22 @@ function initialize_periodic_check(task)
 	setInterval(async () => await do_task(task), task.interval);
 }
 
+async function axios_post_with_timeout_workaround(url, data, config)
+{
+	const timeout = config.timeout;
+	const source = CancelToken.source();
+	let response = null;
+	setTimeout(() =>
+	{
+		if (response === null)
+		{
+			source.cancel();
+		}
+	}, timeout);
+	response = await axios.post(url, data, {cancelToken: source.token});
+	return response;
+}
+
 async function do_task(task)
 {
 	console.log(`do_task(${s(task)})`);
@@ -309,7 +325,14 @@ async function do_task(task)
 	{
 		try
 		{
-			result = await axios.post(task.target + '/chat', {"type": "sbe", "current_state": []})
+			const timeout = 20000;
+			result = await axios_post_with_timeout_workaround(
+				task.target + '/chat',
+				{
+					"type": "sbe",
+					"current_state": []
+					},
+				{timeout});
 			result = {status: result.status, data: result.data}
 			if (result.status == 200 && result.data.status != 'error')
 				ok = true;
@@ -457,8 +480,11 @@ function make_or_update_alert(type, check, now)
 function maybe_resolve_alert(type, check)
 {
 	const alert = find_last_alert(type, check);
-	if (alert && !alert.is_resolved)
-		alert.is_resolved = true
+	if (alert)
+	{
+		if (!alert.is_resolved)
+			alert.is_resolved = true
+	}
 }
 
 
@@ -492,8 +518,14 @@ async function push_alerts_out()
 
 	alerts.forEach(alert =>
 	{
-		if (!alert.is_resolved && alert.severity != 'info')
+		//if (!alert.is_resolved && alert.severity != 'info')
+		if (!alert.hidden)
 		{
+
+			/* if is_resolved, one last push to alertmanager */
+			if (alert.is_resolved)
+				alert.hidden = true;
+
 			const ts = new Date(alert.ts);
 			const end = new Date(alert.ts + 1000 * 60);
 			am_alerts.push(
@@ -503,10 +535,11 @@ async function push_alerts_out()
 						"alertname": alert.type,
 						"node": alert.check.node,
 						"target": alert.check.target,
-						severity: alert.severity
-
+						type: alert.check.type,
 					},
 					"annotations": {
+						severity: alert.severity,
+						resolved: alert.is_resolved?.toString(),
 						time_since_last_heartbeat: alert.time_since_last_heartbeat?.toString(),
 						ts: ts.toString(),
 						streak: alert.streak?.toString()
@@ -515,15 +548,8 @@ async function push_alerts_out()
 
 
 					/* just experimenting with appearing as an alertmanager */
-					"startsAt": ts.toISOString(),
-					"endsAt": end.toISOString(),
-					receivers: [{name: "web.hook"}],
-					status: {
-						inhibitedBy: [],
-						silencedBy: [],
-						state: "active"
-					},
-					updatedAt: ts.toISOString()
+					//"startsAt": ts.toISOString(),//rfcwhat?
+					//"endsAt": end.toISOString(),
 
 				}
 			)
