@@ -1,14 +1,6 @@
-/*
-
-we'll have to make this able to run in browser too.
+'use strict';
 
 
-
-
- */
-
-
-require('dotenv').config();
 fs = require('fs');
 var archieml = require('archieml');
 const IPFS = require('ipfs')
@@ -20,12 +12,11 @@ const cycle = require('./cycle');
 const alertmanager_api = require('alertmanager_api');
 const am = alertmanager_api.ApiClient.instance;
 am.basePath = 'http://localhost:9093/api/v2'
-//am.basePath = 'http://localhost:9093'
 const am_aa = new alertmanager_api.AlertApi();
 
 
-var checks = [];
 var db;
+var checks = [];
 const node_ids = {}
 const node_aliases = {}
 var last_event_ts;
@@ -45,6 +36,7 @@ async function run()
 	console.log(config_fn + ' :');
 	const config_text = fs.readFileSync('config.aml').toString();
 	console.log(config_text);
+	console.log('/'+config_fn);
 	const config = archieml.load(config_text);
 
 

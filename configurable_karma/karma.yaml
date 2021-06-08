@@ -1,6 +1,6 @@
-authorization:
-  acl:
-    silences: /etc/acls.yaml
+#authorization:
+#  acl:
+#    silences: /etc/acls.yaml
 alertmanager:
   interval: 10s
   servers:

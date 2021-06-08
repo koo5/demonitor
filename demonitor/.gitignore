@@ -1,7 +1,6 @@
 config.aml
 node_modules/
 orbitdb/
-peer1.js
 ipfs
 private
 .env

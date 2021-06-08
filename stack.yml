@@ -15,10 +15,10 @@ services:
 
   karma:
     image: koo5/configurable_karma:latest
-    volume:
-      - "./alertmanager/karma.yaml:/karma.yaml"
-#    environment:
-#      - ALERTMANAGER_URI=http://am:9093
+    volumes:
+      - "./configurable_karma/karma.yaml:/karma.yaml"
+    environment:
+      - ALERTMANAGER_URI=http://am:9093
     networks:
       - frontend
     ports:
