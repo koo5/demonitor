@@ -18,6 +18,11 @@ os.chdir(os.path.dirname(sys.argv[0]))
 @click.command()
 def run():
 	shell('docker stack rm demonitor_alertmanager_karma')
+	
+	cnf = 'demonitor/config.aml'
+	if !os.path.isfile(cnf):
+		shutil.copyfile('demonitor/config_example.aml', cnf)
+	
 	subprocess.check_call(
 		shlex.split('docker build -t  "koo5/configurable_karma"  -f "./Dockerfile" .'), 
 		cwd='configurable_karma')
