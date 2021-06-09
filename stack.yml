@@ -2,7 +2,7 @@ version: '3.7'
 
 services:
 
-  am:
+  alertmanager:
     image: quay.io/prometheus/alertmanager:v0.22.0
     networks:
       - frontend
@@ -18,7 +18,7 @@ services:
     volumes:
       - "./configurable_karma/karma.yaml:/karma.yaml"
     environment:
-      - ALERTMANAGER_URI=http://am:9093
+      ALERTMANAGER_URL: "http://alertmanager:9093"
     networks:
       - frontend
     ports:
@@ -31,8 +31,11 @@ services:
   demonitor:
     image: koo5/demonitor:latest
     volumes:
+      - "./demonitor/config.aml:/usr/src/app/config.aml"
       - "ipfs:/usr/src/app/ipfs"
       - "orbitdb:/usr/src/app/orbitdb"
+    environment:
+      ALERTMANAGER_URL: "http://alertmanager:9093"
     networks:
       - frontend
     ports:

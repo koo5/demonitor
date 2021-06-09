@@ -1,6 +1,8 @@
-#!/usr/bin/env bash
+#!/usr/bin/env fish
 
-docker service logs -f demonitor_alertmanager_karma_am &
-docker service logs -f demonitor_alertmanager_karma_karma &
-docker service logs -f demonitor_alertmanager_karma_demonitor 
+set STACK_NAME $argv[1]
+
+docker service logs -f $STACK_NAME"_alertmanager" &
+docker service logs -f $STACK_NAME"_karma" &
+docker service logs -f $STACK_NAME"_demonitor"
 

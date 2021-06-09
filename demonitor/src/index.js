@@ -11,7 +11,6 @@ const axios = require('axios');
 const cycle = require('./cycle');
 const alertmanager_api = require('@koo5/alertmanager_api');
 const am = alertmanager_api.ApiClient.instance;
-am.basePath = 'http://localhost:9093/api/v2'
 const am_aa = new alertmanager_api.AlertApi();
 
 
@@ -38,6 +37,7 @@ async function run()
 	console.log(config_text);
 	console.log('/'+config_fn);
 	const config = archieml.load(config_text);
+	am.basePath = (process.env.ALERTMANAGER_URL || 'http://aaaalocalhost:9093') + '/api/v2'
 
 
 	checks = [

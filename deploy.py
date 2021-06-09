@@ -15,23 +15,25 @@ from copy import deepcopy
 os.chdir(os.path.dirname(sys.argv[0]))
 
 
+stack_name = 'damk'
+
 @click.command()
 def run():
-	shell('docker stack rm demonitor_alertmanager_karma')
-	
+	shell('docker stack rm '+ stack_name)
+
 	cnf = 'demonitor/config.aml'
-	if !os.path.isfile(cnf):
+	if not os.path.isfile(cnf):
 		shutil.copyfile('demonitor/config_example.aml', cnf)
-	
+
 	subprocess.check_call(
-		shlex.split('docker build -t  "koo5/configurable_karma"  -f "./Dockerfile" .'), 
+		shlex.split('docker build -t  "koo5/configurable_karma"  -f "./Dockerfile" .'),
 		cwd='configurable_karma')
 	subprocess.check_call(
-		shlex.split('docker build -t  "koo5/demonitor"  -f "./Dockerfile" .'), 
+		shlex.split('docker build -t  "koo5/demonitor"  -f "./Dockerfile" .'),
 		cwd='demonitor')
-	
+
 	while True:
-		cmdxxx = "docker network ls | grep demonitor_alertmanager_karma"
+		cmdxxx = "docker network ls | grep " + stack_name
 		p = subprocess.run(cmdxxx, shell=True, stdout=subprocess.PIPE)
 		print(cmdxxx + ': ' + str(p.returncode) + ':')
 		print(p.stdout)
@@ -39,9 +41,9 @@ def run():
 			break
 		time.sleep(1)
 
-	shell('docker stack deploy --prune --compose-file stack.yml demonitor_alertmanager_karma')
+	shell('docker stack deploy --prune --compose-file stack.yml ' + stack_name)
 
-	shell('./follow_logs.sh')
+	shell('./follow_logs.sh ' + stack_name)
 
 
 def shell(cmd):

@@ -5,7 +5,7 @@ alertmanager:
   interval: 10s
   servers:
     - name: single
-      uri: "http://am:9093"
+      uri: "http://alertmanager:9093"
       timeout: 10s
       proxy: true
       cors:
