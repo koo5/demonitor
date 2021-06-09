@@ -9,7 +9,7 @@
   "author": "koo5",
   "license": "AGPL-3.0-or-later",
   "dependencies": {
-    "alertmanager_api": "github:koo5/alertmanager_api_js",
+    "@koo5/alertmanager_api": "github:koo5/alertmanager_api_js",
     "archieml": "^0.4.2",
     "axios": "^0.21.1",
     "express": "^4.17.1",
