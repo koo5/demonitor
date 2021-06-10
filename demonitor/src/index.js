@@ -44,7 +44,7 @@ async function run()
 
 	checks = [
 		//{id: 0, node: 'dev', interval: 9000, type: 'chat', target: config.nodes.vmi1.url},
-		{id: 1, node: 'dev', interval: 15000, type: 'chat', target: config.nodes.azure.url},
+		{id: 1, node: 'dev', interval: 25000, type: 'chat', target: config.nodes.azure.url},
 		//{id: 2, node: 'azure', interval: 9000, type: 'chat', target: process.env.VMI1},
 		//{id: 3, node: 'vmi1', interval: 9000, type: 'chat', target: process.env.AZURE},
 	];
