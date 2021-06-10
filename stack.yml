@@ -36,6 +36,7 @@ services:
       - "orbitdb:/usr/src/app/orbitdb"
     environment:
       ALERTMANAGER_URL: "http://alertmanager:9093"
+      DEBUG: "*"
     networks:
       - frontend
     ports:

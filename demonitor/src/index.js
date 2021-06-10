@@ -1,6 +1,24 @@
 'use strict';
 
 
+
+var checks_module = require('./checks');
+/*
+function get_checks(config)
+{
+	return [
+		//{id: 0, node: 'dev', interval: 9000, type: 'chat', target: config.nodes.vmi1.url},
+		{id: 1, node: 'dev', interval: 25000, type: 'chat', target: config.nodes.azure.url},
+		//{id: 2, node: 'azure', interval: 9000, type: 'chat', target: process.env.VMI1},
+		//{id: 3, node: 'vmi1', interval: 9000, type: 'chat', target: process.env.AZURE},
+	];
+}
+
+module.exports = {get_checks};
+*/
+
+
+
 var fs = require('fs');
 var archieml = require('archieml');
 const IPFS = require('ipfs')
@@ -40,15 +58,7 @@ async function run()
 	const config = archieml.load(config_text);
 	am.basePath = (process.env.ALERTMANAGER_URL || 'http://localhost:9093') + '/api/v2'
 
-
-
-	checks = [
-		//{id: 0, node: 'dev', interval: 9000, type: 'chat', target: config.nodes.vmi1.url},
-		{id: 1, node: 'dev', interval: 25000, type: 'chat', target: config.nodes.azure.url},
-		//{id: 2, node: 'azure', interval: 9000, type: 'chat', target: process.env.VMI1},
-		//{id: 3, node: 'vmi1', interval: 9000, type: 'chat', target: process.env.AZURE},
-	];
-
+	checks = checks_module.get_checks(config);
 
 	const db_address = config.db_address || 'monitoringing2';
 
@@ -68,24 +78,37 @@ async function run()
 	// https://github.com/ipfs/js-ipfs/blob/7cf404c8fd11888fa803c6167bd2ec62d94a2b34/docs/MODULE.md
 	const ipfsOptions = {
 		EXPERIMENTAL: {
-			pubsub: true
+			pubsub: true,
+			dht: true
 		},
 		// https://github.com/ipfs/js-ipfs/blob/7cf404c8fd11888fa803c6167bd2ec62d94a2b34/docs/CONFIG.md#addresses
 		config: {
-			Bootstrap: default_bootstrap_override
+			//Bootstrap: default_bootstrap_override
 		},
 		repo: './ipfs'
 	}
 
 
-	const ipfs = await IPFS.create(ipfsOptions)
+	const ipfs = await IPFS.create(ipfsOptions);
 	//await ipfs.config.profiles.apply('lowpower')
 	/* or:
 	        const ipfs = IpfsApi('localhost', '5001')
 	        // If you want a programmatic way to spawn a IPFS Daemon using JavaScript, check out the ipfsd-ctl module.
 	 */
-
 	//ipfs.swarm.connect(bootstrap[0]);
+
+
+	(config.additional_bootstrap_nodes || []).forEach(async (n) =>
+	{
+		try
+		{
+			await ipfs.swarm.connect(n)
+		} catch (e)
+		{
+			console.log(e)
+
+		}
+	});
 
 
 	const identity = await Identities.createIdentity({id: 'test1'})
