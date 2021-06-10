@@ -18,7 +18,7 @@ services:
     volumes:
       - "./configurable_karma/karma.yaml:/karma.yaml"
     environment:
-      ALERTMANAGER_URL: "http://alertmanager:9093"
+      ALERTMANAGER_URI: "http://alertmanager:9093"
     networks:
       - frontend
     ports:

@@ -9,6 +9,7 @@ const Identities = require('orbit-db-identity-provider')
 var moment = require('moment');
 const axios = require('axios');
 const cycle = require('./cycle');
+const express = require('express')
 const alertmanager_api = require('@koo5/alertmanager_api');
 const am = alertmanager_api.ApiClient.instance;
 const am_aa = new alertmanager_api.AlertApi();
@@ -37,12 +38,13 @@ async function run()
 	console.log(config_text);
 	console.log('/'+config_fn);
 	const config = archieml.load(config_text);
-	am.basePath = (process.env.ALERTMANAGER_URL || 'http://aaaalocalhost:9093') + '/api/v2'
+	am.basePath = (process.env.ALERTMANAGER_URL || 'http://localhost:9093') + '/api/v2'
+	console.log(s(process.env));
 
 
 	checks = [
 		//{id: 0, node: 'dev', interval: 9000, type: 'chat', target: config.nodes.vmi1.url},
-		{id: 1, node: 'dev', interval: 9000, type: 'chat', target: config.nodes.azure.url},
+		{id: 1, node: 'dev', interval: 15000, type: 'chat', target: config.nodes.azure.url},
 		//{id: 2, node: 'azure', interval: 9000, type: 'chat', target: process.env.VMI1},
 		//{id: 3, node: 'vmi1', interval: 9000, type: 'chat', target: process.env.AZURE},
 	];
@@ -210,9 +212,8 @@ async function print_events()
 function start_http_server()
 {
 	console.log('start_http_server..')
-	const express = require('express')
+
 	const app = express()
-	const port = 3223
 
 	app.get('/events', (req, res) =>
 	{
@@ -278,6 +279,11 @@ function start_http_server()
 		res.status(404).send("Sorry can't find that!")
 	})
 
+	const port = 3223
+
+	app.listen(port, () => {
+  		console.log(`Example app listening at http://localhost:${port}`)
+	})
 
 }
 
@@ -294,13 +300,13 @@ function initialize_periodic_check(task)
 async function axios_post_with_timeout_workaround(url, data, config)
 {
 	const timeout = config.timeout;
-	const source = CancelToken.source();
+	const source = axios.CancelToken.source();
 	let response = null;
 	setTimeout(() =>
 	{
 		if (response === null)
 		{
-			source.cancel();
+			source.cancel(`timeout of ${timeout}ms`);
 		}
 	}, timeout);
 	response = await axios.post(url, data, {cancelToken: source.token});
@@ -317,7 +323,7 @@ async function do_task(task)
 	{
 		try
 		{
-			const timeout = 20000;
+			const timeout = 60000;
 			result = await axios_post_with_timeout_workaround(
 				task.target + '/chat',
 				{
@@ -326,11 +332,13 @@ async function do_task(task)
 					},
 				{timeout});
 			result = {status: result.status, data: result.data}
+			console.log(s(result));
 			if (result.status == 200 && result.data.status != 'error')
 				ok = true;
 		} catch (e)
 		{
 			error = e;
+			console.log(e)
 		}
 
 	}
@@ -506,7 +514,13 @@ async function push_alerts_out()
 	/*
 	The scheme for v2 is specified as an OpenAPI specification that can be found in the Alertmanager repository. Clients are expected to continuously re-send alerts as long as they are still active (usually on the order of 30 seconds to 3 minutes). Clients can push a list of alerts to Alertmanager via a POST request.
 	 */
-	am_alerts = []
+	am_alerts = [
+		{
+			"labels": {
+				"alertname": 'DeadMansSwitch'
+			}
+		}
+	]
 
 	alerts.forEach(alert =>
 	{

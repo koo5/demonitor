@@ -7,14 +7,14 @@ COPY package*.json ./
 RUN apk add --no-cache --virtual .build-deps alpine-sdk python3
 
 RUN npm -v
-RUN npm install -g --upgrade npm 
+RUN npm install -g --upgrade npm
 RUN npm -v
 RUN npm install
 
 RUN apk del .build-deps
 
 COPY src src
-VOLUME config.aml
+VOLUME /usr/src/app/config.aml
 EXPOSE 3223
 
 CMD ["node", "src/index.js"]
