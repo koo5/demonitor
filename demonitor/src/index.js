@@ -39,7 +39,7 @@ async function run()
 	console.log('/'+config_fn);
 	const config = archieml.load(config_text);
 	am.basePath = (process.env.ALERTMANAGER_URL || 'http://localhost:9093') + '/api/v2'
-	console.log(s(process.env));
+
 
 
 	checks = [
@@ -166,6 +166,11 @@ async function run()
 		setInterval(push_alerts_out, 1000 * 15);
 
 	})
+
+
+	const alias = config.node_alias;
+	if (alias)
+		await db.add({type:'alias', alias:alias});
 
 	initialize_checks();
 	setInterval(async () => await beep(ipfs), 30000);
