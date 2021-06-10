@@ -8,7 +8,7 @@ except:
 	print('please install:\npython3 -m pip install --user -U click pyyaml')
 	exit(1)
 
-import os,subprocess,time,shlex,sys
+import os,subprocess,time,shlex,sys,shutil
 from copy import deepcopy
 
 
