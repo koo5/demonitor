@@ -92,15 +92,20 @@ async function run()
 		repo: './ipfs'
 	}
 
+	var ipfs;
+
 	try
 	{
-		const ipfs = await IPFS.create(ipfsOptions);
+		ipfs = await IPFS.create(ipfsOptions);
 	}
 	catch (e)
 	{
 		console.log(e);
 		process.exit(1)
 	}
+
+	console.log(`ipfs: ${ipfs}`);
+
 	//await ipfs.config.profiles.apply('lowpower')
 	/* or:
 	        const ipfs = IpfsApi('localhost', '5001')
@@ -109,7 +114,7 @@ async function run()
 	//ipfs.swarm.connect(bootstrap[0]);
 
 
-	(config.additional_bootstrap_nodes || []).forEach(async (n) =>
+	await (config.additional_bootstrap_nodes || []).forEach(async (n) =>
 	{
 		try
 		{
