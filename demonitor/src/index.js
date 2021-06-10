@@ -525,12 +525,8 @@ async function push_alerts_out()
 	alerts.forEach(alert =>
 	{
 		//if (!alert.is_resolved && alert.severity != 'info')
-		if (!alert.hidden)
+		if (!alert.is_resolved)
 		{
-
-			/* if is_resolved, one last push to alertmanager */
-			if (alert.is_resolved)
-				alert.hidden = true;
 
 			const ts = new Date(alert.ts);
 			const end = new Date(alert.ts + 1000 * 60);
