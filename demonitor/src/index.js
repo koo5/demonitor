@@ -84,12 +84,22 @@ async function run()
 		// https://github.com/ipfs/js-ipfs/blob/7cf404c8fd11888fa803c6167bd2ec62d94a2b34/docs/CONFIG.md#addresses
 		config: {
 			//Bootstrap: default_bootstrap_override
+			Pubsub:
+				{
+					Router: 'floodsub'
+				}
 		},
 		repo: './ipfs'
 	}
 
-
-	const ipfs = await IPFS.create(ipfsOptions);
+	try
+	{
+		const ipfs = await IPFS.create(ipfsOptions);
+	}
+	catch (e)
+	{
+		console.log(e);
+	}
 	//await ipfs.config.profiles.apply('lowpower')
 	/* or:
 	        const ipfs = IpfsApi('localhost', '5001')
