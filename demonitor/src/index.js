@@ -99,6 +99,7 @@ async function run()
 	catch (e)
 	{
 		console.log(e);
+		process.exit(1)
 	}
 	//await ipfs.config.profiles.apply('lowpower')
 	/* or:
