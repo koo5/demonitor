@@ -132,8 +132,8 @@ async function run()
 	console.log()
 	console.log('publicKey:')
 	console.log(identity.publicKey)
-	//console.log(identity)
-
+	console.log('identity:')
+	console.log(identity.id)
 
 	const orbitdb = await OrbitDB.createInstance(ipfs, {identity})
 	/*console.log()
@@ -145,7 +145,7 @@ async function run()
 		{
 			accessController: {
 				type: 'orbitdb', //OrbitDBAccessController
-				write: ['*'] //       write: [orbitdb.identity.id]
+				write: config.write_permission || ['*']
 			}
 		}
 	)
