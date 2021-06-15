@@ -383,7 +383,7 @@ async function do_task(task)
 	{
 		try
 		{
-			const timeout = 60000;
+			const timeout = task.timeout || 10 * 60000;
 			result = await axios_post_with_timeout_workaround(
 				task.target + '/chat',
 				{
