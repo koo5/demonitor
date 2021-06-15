@@ -146,11 +146,10 @@ async function run()
 
 	db = await orbitdb.log(db_address,
 		{
+			create: config.create,
 			accessController: {
-				create: config.create,
-				type: 'orbitdb', //OrbitDBAccessController
-				write: write_permission
-			}
+				canAppend: (entry) => true
+    		}
 		}
 	)
 	console.log('db_address:')
