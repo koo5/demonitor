@@ -148,7 +148,8 @@ async function run()
 		{
 			create: config.create,
 			accessController: {
-				canAppend: (entry) => true
+				canAppend: (entry) => true,
+				write: ["*"]
     		}
 		}
 	)
