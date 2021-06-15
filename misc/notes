@@ -7,3 +7,24 @@ https://github.com/open-telemetry/opentelemetry-collector/blob/main/exporter/REA
 
 
 
+
+
+
+```
+damk_demonitor.1.x3rau2rdl2km@vmi579006.contaboserver.net    | Swarm listening on /ip4/127.0.0.1/tcp/4003/ws/p2p/Qmf9adSdYp25JahjSATkFvHYmSye7KVk92SahCNdy8GfeQ
+damk_demonitor.1.x3rau2rdl2km@vmi579006.contaboserver.net    | ipfs: [object Object]
+damk_demonitor.1.x3rau2rdl2km@vmi579006.contaboserver.net    | node identity:
+damk_demonitor.1.x3rau2rdl2km@vmi579006.contaboserver.net    | 026915fdafbf9df23c49235dc0d247130990ed4e6f459ddd81a19ceee4db1024e5
+damk_demonitor.1.x3rau2rdl2km@vmi579006.contaboserver.net    | write_permission:
+damk_demonitor.1.x3rau2rdl2km@vmi579006.contaboserver.net    | [ '*' ]
+damk_alertmanager.1.moa24ywhl0l8@vmi579006.contaboserver.net    | level=info ts=2021-06-15T18:26:24.873Z caller=cluster.go:696 component=cluster msg="gossip not settled" polls=0 before=0 now=1 elapsed=2.000413853s
+damk_alertmanager.1.moa24ywhl0l8@vmi579006.contaboserver.net    | level=info ts=2021-06-15T18:26:32.876Z caller=cluster.go:688 component=cluster msg="gossip settled; proceeding" elapsed=10.003317217s
+```
+^ stuck here? delete ipfs/ and orbitdb/ and it should continue:
+```
+damk_demonitor.1.ulpee9rb6836@vmi579006.contaboserver.net    | db_address:
+damk_demonitor.1.ulpee9rb6836@vmi579006.contaboserver.net    | /orbitdb/zdpuApREVSYgwqPj59CiXnECQGvsLMUqEUpqRaBFBTYnMQWfF/ugh11223
+damk_demonitor.1.ulpee9rb6836@vmi579006.contaboserver.net    |
+damk_demonitor.1.ulpee9rb6836@vmi579006.contaboserver.net    | load...
+damk_demonitor.1.ulpee9rb6836@vmi579006.contaboserver.net    | start_http_server..
+```

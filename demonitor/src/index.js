@@ -226,7 +226,7 @@ async function beep(ipfs)
 	//await db.add({ts:moment().format()})
 	const peers = await ipfs.swarm.peers({direction: true, streams: true, verbose: true, latency: true})
 	console.log(`${peers.length} peers.`);
-	//console.log( peers );
+	console.log( peers );
 }
 
 /*
