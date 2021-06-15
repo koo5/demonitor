@@ -16,6 +16,8 @@ RUN apk del .build-deps
 COPY src src
 VOLUME /usr/src/app/config.aml
 EXPOSE 3223
+EXPOSE 4002
+EXPOSE 4003
 
 CMD ["node", "src/index.js"]
 

@@ -41,6 +41,8 @@ services:
       - frontend
     ports:
       - "3223:3223"
+      - "4002:4002"
+      - "4003:4003"
     deploy:
       replicas: 1
       restart_policy:
