@@ -75,13 +75,6 @@ async function run()
 	console.log('default_bootstrap_override:')
 	console.log(default_bootstrap_override)
 	console.log()
-	/*
-	finishme:
-	const additional_bootstrap_nodes = config.additional_bootstrap_nodes || [];
-	console.log('additional_bootstrap_nodes:')
-	console.log(additional_bootstrap_nodes)
-	console.log()
-	 */
 
 
 	// https://github.com/ipfs/js-ipfs/blob/7cf404c8fd11888fa803c6167bd2ec62d94a2b34/docs/MODULE.md
@@ -95,7 +88,7 @@ async function run()
 			//Bootstrap: default_bootstrap_override
 			Pubsub:
 				{
-					Router: 'floodsub'
+					Router: 'gossipsub'
 				}
 		},
 		repo: './ipfs'
@@ -104,6 +97,13 @@ async function run()
 	var ipfs;
 	ipfs = await IPFS.create(ipfsOptions);
 	console.log(`ipfs: ${ipfs}`);
+
+	const additional_bootstrap_nodes = config.additional_bootstrap_nodes || [];
+	console.log('additional_bootstrap_nodes:')
+	console.log(additional_bootstrap_nodes)
+	console.log();
+	additional_bootstrap_nodes.forEach(n => ipfs.bootstrap.add(n));
+
 
 	//await ipfs.config.profiles.apply('lowpower')
 	/* or:
