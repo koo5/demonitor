@@ -7,10 +7,10 @@ var checks_module = require('./checks');
 function get_checks(config)
 {
 	return [
-		//{id: 0, node: 'dev', interval: 9000, type: 'chat', target: config.nodes.vmi1.url},
-		{id: 1, node: 'dev', interval: 25000, type: 'chat', target: config.nodes.azure.url},
-		//{id: 2, node: 'azure', interval: 9000, type: 'chat', target: process.env.VMI1},
-		//{id: 3, node: 'vmi1', interval: 9000, type: 'chat', target: process.env.AZURE},
+		{node: 'dev', interval: 35000, type: 'chat', target: config.nodes.vmi1.url},
+		{node: 'dev', interval: 45000, type: 'chat', target: config.nodes.azure.url},
+		{node: 'azure', interval: 45000, type: 'chat', target: config.nodes.vmi1.url},
+		{node: 'vmi1', interval: 55000, type: 'chat', target: config.nodes.azure.url},
 	];
 }
 
@@ -44,7 +44,16 @@ const seen = {}
 var alerts = [];
 const program_start_ts = Date.now();
 var am_alerts = [];
+var node_alias;
 
+
+function load_checks(config)
+{
+	checks = checks_module.get_checks(config);
+	let ch_id = 0;
+	checks.forEach(ch => ch.id = ch_id++);
+	return checks;
+}
 
 async function run()
 {
@@ -58,7 +67,7 @@ async function run()
 	const config = archieml.load(config_text);
 	am.basePath = (process.env.ALERTMANAGER_URL || 'http://localhost:9093') + '/api/v2'
 
-	checks = checks_module.get_checks(config);
+	checks = load_checks(config);
 
 	const db_address = config.db_address || 'monitoringing2';
 
@@ -93,17 +102,7 @@ async function run()
 	}
 
 	var ipfs;
-
-	try
-	{
-		ipfs = await IPFS.create(ipfsOptions);
-	}
-	catch (e)
-	{
-		console.log(e);
-		process.exit(1)
-	}
-
+	ipfs = await IPFS.create(ipfsOptions);
 	console.log(`ipfs: ${ipfs}`);
 
 	//await ipfs.config.profiles.apply('lowpower')
@@ -129,10 +128,10 @@ async function run()
 
 	const identity = await Identities.createIdentity({id: 'test1'})
 
-	console.log()
+	/*console.log()
 	console.log('publicKey:')
-	console.log(identity.publicKey)
-	console.log('identity:')
+	console.log(identity.publicKey)*/
+	console.log('node identity:')
 	console.log(identity.id)
 
 	const orbitdb = await OrbitDB.createInstance(ipfs, {identity})
@@ -141,11 +140,16 @@ async function run()
 	console.log(orbitdb)*/
 
 
+	const write_permission = config.write_permission || ['*'];
+	console.log('write_permission:')
+	console.log(write_permission)
+
 	db = await orbitdb.log(db_address,
 		{
 			accessController: {
+				create: config.create,
 				type: 'orbitdb', //OrbitDBAccessController
-				write: config.write_permission || ['*']
+				write: write_permission
 			}
 		}
 	)
@@ -207,9 +211,9 @@ async function run()
 	})
 
 
-	const alias = config.node_alias;
-	if (alias)
-		await db.add({type:'alias', alias:alias});
+	node_alias = config.node_alias;
+	if (node_alias)
+		await db.add({type:'alias', alias:node_alias});
 
 	initialize_checks();
 	setInterval(async () => await beep(ipfs), 30000);
@@ -249,7 +253,15 @@ async function print_events()
 
 (async () =>
 {
-	await run();
+	try
+	{
+		await run();
+	}
+	catch (e)
+	{
+		console.log(e);
+		process.exit(1);
+	}
 })();
 
 
@@ -333,7 +345,11 @@ function start_http_server()
 
 function initialize_checks()
 {
-	checks.map(initialize_periodic_check);
+	checks.forEach(ch =>
+	{
+		if (node_alias == ch.node)
+			initialize_periodic_check(ch);
+	});
 }
 
 function initialize_periodic_check(task)
