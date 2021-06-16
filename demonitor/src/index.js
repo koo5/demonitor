@@ -589,7 +589,7 @@ async function push_alerts_out()
 		{
 
 			const ts = new Date(alert.ts);
-			const end = new Date(alert.ts + 1000 * 60);
+			const end = new Date(alert.ts + 60*60000);//1hr
 			am_alerts.push(
 				// https://prometheus.io/docs/alerting/latest/clients/#sending-alerts
 				{
@@ -608,10 +608,8 @@ async function push_alerts_out()
 					},
 					"generatorURL": alert.generatorURL,
 
-
-					/* just experimenting with appearing as an alertmanager */
 					//"startsAt": ts.toISOString(),//rfcwhat?
-					//"endsAt": end.toISOString(),
+					"endsAt": end.toISOString(),
 
 				}
 			)
