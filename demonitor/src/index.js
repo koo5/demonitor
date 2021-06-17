@@ -628,3 +628,11 @@ async function push_alerts_out()
 	})
 }
 
+
+/*
+todo:
+db rotation system:
+Allow others to always find current eventlog: use a keyvalue to publish current eventlog.
+Allow traversing a chain of eventlogs: When eventlog reaches X entries, post pointers to the other eventlog to both the new and the old eventlog.
+ */
+ 
