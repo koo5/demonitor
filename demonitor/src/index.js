@@ -2,24 +2,15 @@
 
 
 var checks_module = require('./checks');
-/*
-function get_checks(config)
-{
-	return [
-		{node: 'dev', interval: 35000, type: 'chat', target: config.nodes.vmi1.url},
-		{node: 'dev', interval: 45000, type: 'chat', target: config.nodes.azure.url},
-		{node: 'azure', interval: 45000, type: 'chat', target: config.nodes.vmi1.url},
-		{node: 'vmi1', interval: 55000, type: 'chat', target: config.nodes.azure.url},
-	];
-}
 
-module.exports = {get_checks};
-*/
+
+//pick one
+const { create: ipfsHttp } = require('ipfs-http-client')
+//const { create: ipfsHttp } = require('ipfs')
 
 
 var fs = require('fs');
 var archieml = require('archieml');
-const IPFS = require('ipfs')
 const OrbitDB = require('orbit-db')
 const Identities = require('orbit-db-identity-provider')
 var moment = require('moment');
@@ -100,7 +91,7 @@ async function init_ipfs(config)
 	}
 
 	var ipfs;
-	ipfs = await IPFS.create(ipfsOptions);
+	ipfs = await create(ipfsOptions);
 	/* or:
 	ipfs = IpfsApi('localhost', '5001')
 	// If you want a programmatic way to spawn a IPFS Daemon using JavaScript, check out the ipfsd-ctl module.

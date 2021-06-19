@@ -32,7 +32,7 @@ services:
     image: koo5/demonitor:latest
     volumes:
       - "./demonitor/config.aml:/usr/src/app/config.aml"
-      - "ipfs:/usr/src/app/ipfs"
+      - "jsipfs:/usr/src/app/ipfs"
       - "orbitdb:/usr/src/app/orbitdb"
     environment:
       ALERTMANAGER_URL: "http://alertmanager:9093"
@@ -48,13 +48,34 @@ services:
       restart_policy:
         condition: any
 
+  ipfs:
+    impage: ipfs/go-ipfs:latest
+    volumes:
+      - ipfs_staging:/export
+      - ipfs_data:/data/ipfs
+    environment:
+      IPFS_SWARM_KEY_FILE: /run/secrets/swarm.key
+    secrets:
+      - IPFS_SWARM_KEY_FILE
+
+
+    ports:
+      - "4001:4001"
+      - "127.0.0.1:8080:8080"
+      - "127.0.0.1:5001:5001"
+
 
 networks:
   frontend:
 
 
 volumes:
-  ipfs:
+  jsipfs:
   orbitdb:
+  ipfs_staging:
+  ipfs_data:
 
-
+secrets:
+  IPFS_SWARM_KEY_FILE:
+    secrets/swarm.key
+    

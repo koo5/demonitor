@@ -21,6 +21,13 @@ For the purposes of demonitor, blockchain isn't needed, though. We can simply tr
 
 After program start, the database is "loaded". Loading multiple thousand entries takes minutes.  
 
+### IPFS
+there are two implementations of IPFS: js-ipfs, and go-ipfs. It's possible to run js-ipfs in-process. It is not quite mature, though. go-ipfs is set up to run as a standalone docker container.
+
+
+### swarm key
+this has the effect that our nodes never talk to any stranger nodes. 
+
 #### log
 An immutable "event log'. You append JSON objects.
 
