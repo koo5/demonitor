@@ -1,7 +1,6 @@
 'use strict';
 
 
-
 var checks_module = require('./checks');
 /*
 function get_checks(config)
@@ -16,7 +15,6 @@ function get_checks(config)
 
 module.exports = {get_checks};
 */
-
 
 
 var fs = require('fs');
@@ -47,7 +45,7 @@ var am_alerts = [];
 var node_alias;
 
 
-function load_checks(config)
+async function load_checks(config)
 {
 	checks = checks_module.get_checks(config);
 	let ch_id = 0;
@@ -55,22 +53,23 @@ function load_checks(config)
 	return checks;
 }
 
-async function run()
+async function init_config()
 {
-
 
 	const config_fn = 'config.aml';
 	console.log(config_fn + ' :');
 	const config_text = fs.readFileSync('config.aml').toString();
 	console.log(config_text);
-	console.log('/'+config_fn);
+	console.log('/' + config_fn);
 	const config = archieml.load(config_text);
 	am.basePath = (process.env.ALERTMANAGER_URL || 'http://localhost:9093') + '/api/v2'
+	return config
 
-	checks = load_checks(config);
+}
 
-	const db_address = config.db_address || 'monitoringing2';
 
+async function init_ipfs(config)
+{
 	const default_bootstrap_override = config.default_bootstrap_override;
 	console.log('default_bootstrap_override:')
 	console.log(default_bootstrap_override)
@@ -89,29 +88,32 @@ async function run()
 			Pubsub:
 				{
 					Router: 'gossipsub'
+				},
+			/*relay: {
+				enabled: true, // enable relay dialer/listener (STOP)
+				hop: {
+					enabled: true // make this node a relay (HOP)
 				}
+			}*/
 		},
 		repo: './ipfs'
 	}
 
 	var ipfs;
 	ipfs = await IPFS.create(ipfsOptions);
+	/* or:
+	ipfs = IpfsApi('localhost', '5001')
+	// If you want a programmatic way to spawn a IPFS Daemon using JavaScript, check out the ipfsd-ctl module.
+	 */
 	console.log(`ipfs: ${ipfs}`);
+
+	await ipfs.config.profiles.apply('lowpower');
 
 	const additional_bootstrap_nodes = config.additional_bootstrap_nodes || [];
 	console.log('additional_bootstrap_nodes:')
 	console.log(additional_bootstrap_nodes)
 	console.log();
 	additional_bootstrap_nodes.forEach(n => ipfs.bootstrap.add(n));
-
-
-	//await ipfs.config.profiles.apply('lowpower')
-	/* or:
-	        const ipfs = IpfsApi('localhost', '5001')
-	        // If you want a programmatic way to spawn a IPFS Daemon using JavaScript, check out the ipfsd-ctl module.
-	 */
-	//ipfs.swarm.connect(bootstrap[0]);
-
 
 	await (config.additional_bootstrap_nodes || []).forEach(async (n) =>
 	{
@@ -125,7 +127,13 @@ async function run()
 		}
 	});
 
+	return ipfs;
 
+}
+
+async function init_orbitdb(config, ipfs)
+{
+	const db_address = config.db_address || 'demonitor1';
 	const identity = await Identities.createIdentity({id: 'test1'})
 
 	/*console.log()
@@ -150,7 +158,7 @@ async function run()
 			accessController: {
 				canAppend: (entry) => true,
 				write: ["*"]
-    		}
+			}
 		}
 	)
 	console.log('db_address:')
@@ -163,8 +171,6 @@ async function run()
 	console.log('load...')
 	db.load(-1);
 	//await print_events(db);
-	start_http_server();
-
 	console.log()
 
 	// https://github.com/orbitdb/orbit-db/blob/main/API.md#replicated
@@ -209,6 +215,19 @@ async function run()
 		setInterval(push_alerts_out, 1000 * 15);
 
 	})
+	return db;
+}
+
+async function run()
+{
+
+	let config = await init_config();
+	checks = await load_checks(config);
+	let ipfs = await init_ipfs(config);
+	let db = await init_orbitdb(config, ipfs);
+	/*
+	start_http_server();
+
 
 
 	node_alias = config.node_alias;
@@ -216,7 +235,10 @@ async function run()
 		await db.add({type:'alias', alias:node_alias});
 
 	initialize_checks();
+
+	 */
 	setInterval(async () => await beep(ipfs), 30000);
+
 }
 
 
@@ -226,7 +248,7 @@ async function beep(ipfs)
 	//await db.add({ts:moment().format()})
 	const peers = await ipfs.swarm.peers({direction: true, streams: true, verbose: true, latency: true})
 	console.log(`${peers.length} peers.`);
-	console.log( peers );
+	console.log(peers);
 }
 
 /*
@@ -256,8 +278,7 @@ async function print_events()
 	try
 	{
 		await run();
-	}
-	catch (e)
+	} catch (e)
 	{
 		console.log(e);
 		process.exit(1);
@@ -337,8 +358,9 @@ function start_http_server()
 
 	const port = 3223
 
-	app.listen(port, () => {
-  		console.log(`Example app listening at http://localhost:${port}`)
+	app.listen(port, () =>
+	{
+		console.log(`Example app listening at http://localhost:${port}`)
 	})
 
 }
@@ -389,7 +411,7 @@ async function do_task(task)
 				{
 					"type": "sbe",
 					"current_state": []
-					},
+				},
 				{timeout});
 			result = {status: result.status, data: result.data}
 			console.log(s(result));
@@ -589,7 +611,7 @@ async function push_alerts_out()
 		{
 
 			const ts = new Date(alert.ts);
-			const end = new Date(alert.ts + 60*60000);//1hr
+			const end = new Date(alert.ts + 60 * 60000);//1hr
 			am_alerts.push(
 				// https://prometheus.io/docs/alerting/latest/clients/#sending-alerts
 				{
@@ -635,4 +657,4 @@ db rotation system:
 Allow others to always find current eventlog: use a keyvalue to publish current eventlog.
 Allow traversing a chain of eventlogs: When eventlog reaches X entries, post pointers to the other eventlog to both the new and the old eventlog.
  */
- 
+
