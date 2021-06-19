@@ -57,16 +57,13 @@ services:
       IPFS_SWARM_KEY_FILE: /run/secrets/swarm.key
     networks:
       - frontend
-    secrets:
-      - IPFS_SWARM_KEY_FILE
-    command: daemon --migrate=true --enable-pubsub-experiment
-
-
-
     ports:
       - "4001:4001"
       - "5002:8080"
       - "5001:5001"
+    secrets:
+      - IPFS_SWARM_KEY_FILE
+    command: daemon --migrate=true --enable-pubsub-experiment
 
 
 networks:
