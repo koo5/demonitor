@@ -4,9 +4,13 @@
 var checks_module = require('./checks');
 
 
-//pick one
-const { create: ipfsHttp } = require('ipfs-http-client')
-//const { create: ipfsHttp } = require('ipfs')
+const IPFS_DEPLOYMENT_METHOD = 'docker-go-ipfs'
+
+
+if (IPFS_DEPLOYMENT_METHOD == 'docker-go-ipfs')
+	var { create } = require('ipfs-http-client')
+else
+	var { create } = require('ipfs')
 
 
 var fs = require('fs');
@@ -91,7 +95,10 @@ async function init_ipfs(config)
 	}
 
 	var ipfs;
-	ipfs = await create(ipfsOptions);
+	if (IPFS_DEPLOYMENT_METHOD == 'docker-go-ipfs')
+		ipfs = create('http://ipfs:5001')
+	else
+		ipfs = await create(ipfsOptions);
 	/* or:
 	ipfs = IpfsApi('localhost', '5001')
 	// If you want a programmatic way to spawn a IPFS Daemon using JavaScript, check out the ipfsd-ctl module.

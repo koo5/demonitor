@@ -49,20 +49,22 @@ services:
         condition: any
 
   ipfs:
-    impage: ipfs/go-ipfs:latest
+    image: ipfs/go-ipfs:latest
     volumes:
       - ipfs_staging:/export
       - ipfs_data:/data/ipfs
     environment:
       IPFS_SWARM_KEY_FILE: /run/secrets/swarm.key
+    networks:
+      - frontend
     secrets:
       - IPFS_SWARM_KEY_FILE
 
 
     ports:
       - "4001:4001"
-      - "127.0.0.1:8080:8080"
-      - "127.0.0.1:5001:5001"
+      - "5002:8080"
+      - "5001:5001"
 
 
 networks:
@@ -77,5 +79,5 @@ volumes:
 
 secrets:
   IPFS_SWARM_KEY_FILE:
-    secrets/swarm.key
-    
+    file: secrets/swarm.key
+
