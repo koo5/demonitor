@@ -59,6 +59,8 @@ services:
       - frontend
     secrets:
       - IPFS_SWARM_KEY_FILE
+    command: daemon --migrate=true --enable-pubsub-experiment
+
 
 
     ports:
