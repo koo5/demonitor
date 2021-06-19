@@ -26,8 +26,15 @@ def run():
 		shutil.copyfile('demonitor/config_example.aml', cnf)
 
 	subprocess.check_call(
+		shlex.split('docker build -t  "koo5/echo"  -f "./Dockerfile" .'),
+		cwd='echo')
+
+	subprocess.check_call(
 		shlex.split('docker build -t  "koo5/configurable_karma"  -f "./Dockerfile" .'),
 		cwd='configurable_karma')
+	subprocess.check_call(
+		shlex.split('docker build -t  "koo5/configurable_alertmanager"  -f "./Dockerfile" .'),
+		cwd='alertmanager')
 	subprocess.check_call(
 		shlex.split('docker build -t  "koo5/demonitor"  -f "./Dockerfile" .'),
 		cwd='demonitor')

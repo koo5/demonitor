@@ -232,7 +232,7 @@ async function run()
 
 	initialize_checks();
 
-	 
+
 	setInterval(async () => await beep(ipfs), 30000);
 
 }
@@ -244,7 +244,7 @@ async function beep(ipfs)
 	//await db.add({ts:moment().format()})
 	const peers = await ipfs.swarm.peers({direction: true, streams: true, verbose: true, latency: true})
 	console.log(`${peers.length} peers.`);
-	console.log(peers);
+	//console.log(peers);
 }
 
 /*
@@ -436,7 +436,7 @@ function start_checking_events()
 
 function start_reviewing_check_results(check)
 {
-	setInterval(() => check_heartbeat(check), check.interval)
+	setInterval(() => check_heartbeat(check), 60000)
 }
 
 
@@ -498,7 +498,7 @@ function get_last_event(check)
 	for (const event of events)
 	{
 		//console.log(`(const ${s(event)} of events)`);
-		if (event.payload.check?.id == check.id)
+		if (event.payload.value.check?.id == check.id)
 			return event;
 	}
 }
@@ -511,8 +511,7 @@ function check_heartbeat(check)
 	const time_since_program_start = now - program_start_ts;
 	const propagation_max_delay = 30000;
 	const expected_at_most_before = check.interval + propagation_max_delay;
-	var time_since_last_heartbeat = now;
-	time_since_last_heartbeat -= last_event?.payload.value.unix_ts_ms || 0;
+	var time_since_last_heartbeat = now - last_event?.payload.value.unix_ts_ms || 0;
 
 	const type = 'heartbeat_failure';
 	const ok = time_since_last_heartbeat <= expected_at_most_before && expected_at_most_before < time_since_program_start
