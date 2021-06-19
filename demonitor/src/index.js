@@ -8,9 +8,9 @@ const IPFS_DEPLOYMENT_METHOD = 'docker-go-ipfs'
 
 
 if (IPFS_DEPLOYMENT_METHOD == 'docker-go-ipfs')
-	var { create } = require('ipfs-http-client')
+	var {create} = require('ipfs-http-client')
 else
-	var { create } = require('ipfs')
+	var {create} = require('ipfs')
 
 
 var fs = require('fs');
@@ -71,38 +71,36 @@ async function init_ipfs(config)
 	console.log()
 
 
-	// https://github.com/ipfs/js-ipfs/blob/7cf404c8fd11888fa803c6167bd2ec62d94a2b34/docs/MODULE.md
-	const ipfsOptions = {
-		EXPERIMENTAL: {
-			pubsub: true,
-			dht: true
-		},
-		// https://github.com/ipfs/js-ipfs/blob/7cf404c8fd11888fa803c6167bd2ec62d94a2b34/docs/CONFIG.md#addresses
-		config: {
-			//Bootstrap: default_bootstrap_override
-			Pubsub:
-				{
-					Router: 'gossipsub'
-				},
-			/*relay: {
-				enabled: true, // enable relay dialer/listener (STOP)
-				hop: {
-					enabled: true // make this node a relay (HOP)
-				}
-			}*/
-		},
-		repo: './ipfs'
-	}
-
 	var ipfs;
 	if (IPFS_DEPLOYMENT_METHOD == 'docker-go-ipfs')
 		ipfs = create('http://ipfs:5001')
 	else
+	{
+		// https://github.com/ipfs/js-ipfs/blob/7cf404c8fd11888fa803c6167bd2ec62d94a2b34/docs/MODULE.md
+		const ipfsOptions = {
+			EXPERIMENTAL: {
+				pubsub: true,
+				dht: true
+			},
+			// https://github.com/ipfs/js-ipfs/blob/7cf404c8fd11888fa803c6167bd2ec62d94a2b34/docs/CONFIG.md#addresses
+			config: {
+				//Bootstrap: default_bootstrap_override
+				Pubsub:
+					{
+						Router: 'gossipsub'
+					},
+				/*relay: {
+					enabled: true, // enable relay dialer/listener (STOP)
+					hop: {
+						enabled: true // make this node a relay (HOP)
+					}
+				}*/
+			},
+			repo: './ipfs'
+		}
+
 		ipfs = await create(ipfsOptions);
-	/* or:
-	ipfs = IpfsApi('localhost', '5001')
-	// If you want a programmatic way to spawn a IPFS Daemon using JavaScript, check out the ipfsd-ctl module.
-	 */
+	}
 	console.log(`ipfs: ${ipfs}`);
 
 	await ipfs.config.profiles.apply('lowpower');
@@ -223,7 +221,7 @@ async function run()
 	checks = await load_checks(config);
 	let ipfs = await init_ipfs(config);
 	let db = await init_orbitdb(config, ipfs);
-	/*
+
 	start_http_server();
 
 
@@ -234,7 +232,7 @@ async function run()
 
 	initialize_checks();
 
-	 */
+	 
 	setInterval(async () => await beep(ipfs), 30000);
 
 }

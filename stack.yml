@@ -4,6 +4,9 @@ services:
 
   alertmanager:
     image: quay.io/prometheus/alertmanager:v0.22.0
+    volumes:
+      - "alertmanager_storage:/alertmanager"
+      - "alertmanager_etc:/etc/alertmanager"
     networks:
       - frontend
     ports:
@@ -12,7 +15,7 @@ services:
       replicas: 1
       restart_policy:
         condition: any
-
+    command: --config.file=alertmanager.yml
   karma:
     image: koo5/configurable_karma:latest
     volumes:
@@ -54,7 +57,7 @@ services:
       - ipfs_staging:/export
       - ipfs_data:/data/ipfs
     environment:
-      IPFS_SWARM_KEY_FILE: /run/secrets/swarm.key
+      #IPFS_SWARM_KEY_FILE: /run/secrets/swarm.key
     networks:
       - frontend
     ports:
@@ -71,10 +74,13 @@ networks:
 
 
 volumes:
-  jsipfs:
   orbitdb:
+  jsipfs:
   ipfs_staging:
   ipfs_data:
+  alertmanager_storage:
+  alertmanager_etc:
+
 
 secrets:
   IPFS_SWARM_KEY_FILE:
