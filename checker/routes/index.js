@@ -36,7 +36,7 @@ router.post('/check', async function (req, res, next)
 {
 	const task = req.body;
 	console.log(`do_task(${s(task)})`);
-	res.setTimeout(60000 + task.timeout);
+	res.setTimeout(60000 + task.interval);
 	var ok = false;
 	var error;
 	var result;
