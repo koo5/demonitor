@@ -1,3 +1,4 @@
+# https://github.com/prometheus/alertmanager/blob/master/examples/webhook/echo.go
 FROM golang:1.10
 
 WORKDIR $GOPATH/src/app

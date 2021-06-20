@@ -127,7 +127,7 @@ async function init_ipfs(config)
 
 }
 
-async function init_orbitdb(config, ipfs)
+async function init_orbitdb(config, ipfs, ready)
 {
 	const db_address = config.db_address || 'demonitor1';
 	const identity = await Identities.createIdentity({id: 'test1'})
@@ -206,10 +206,7 @@ async function init_orbitdb(config, ipfs)
 	db.events.on('ready', () =>
 	{
 		console.log('database is now ready to be queried');
-
-		start_checking_events();
-		setInterval(push_alerts_out, 1000 * 15);
-
+		ready();
 	})
 	return db;
 }
@@ -220,10 +217,13 @@ async function run()
 	let config = await init_config();
 	checks = await load_checks(config);
 	let ipfs = await init_ipfs(config);
-	let db = await init_orbitdb(config, ipfs);
+	let db = await init_orbitdb(config, ipfs, () =>
+	{
+		checks.map(start_reviewing_check_results);
+		setInterval(push_alerts_out, 1000 * 15);
+	});
 
 	start_http_server();
-
 
 
 	node_alias = config.node_alias;
@@ -321,9 +321,11 @@ function start_http_server()
 		var result = '<html><body>';
 		alerts.forEach((e) =>
 		{
-			result += '<pre>'
+			result += '<p>'
+			result += moment(e.ts).toISOString()
+			result += ':<br><pre>'
 			result += JSON.stringify(e, null, ' ');
-			result += '</pre>'
+			result += '</pre></p>'
 		})
 		result += '</body></html>';
 		res.send(result)
@@ -393,34 +395,8 @@ async function axios_post_with_timeout_workaround(url, data, config)
 
 async function do_task(task)
 {
-	console.log(`do_task(${s(task)})`);
-	var ok = false;
-	var error;
-	var result;
-	if (task.type == 'chat')
-	{
-		try
-		{
-			const timeout = task.timeout || 10 * 60000;
-			result = await axios_post_with_timeout_workaround(
-				task.target + '/chat',
-				{
-					"type": "sbe",
-					"current_state": []
-				},
-				{timeout});
-			result = {status: result.status, data: result.data}
-			console.log(s(result));
-			if (result.status == 200 && result.data.status != 'error')
-				ok = true;
-		} catch (e)
-		{
-			error = e;
-			console.log(e)
-		}
-
-	}
-	emit_a_check_result({ok, check: task, unix_ts_ms: Date.now(), result: ss(result), error: ss(error)});
+	console.log(`do_task(${s(task.id)})`);
+	await emit_a_check_result((await axios.post('http://checker:3000/check', task)).data);
 }
 
 function emit_a_check_result(event)
@@ -428,11 +404,6 @@ function emit_a_check_result(event)
 	db.add({type: 'check_result', ...event})
 }
 
-
-function start_checking_events()
-{
-	checks.map(start_reviewing_check_results);
-}
 
 function start_reviewing_check_results(check)
 {

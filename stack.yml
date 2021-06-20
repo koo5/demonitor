@@ -2,6 +2,17 @@ version: '3.7'
 
 services:
 
+  checker:
+    image: koo5/checker:latest
+    networks:
+      - frontend
+    ports:
+      - 3000
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: any
+
   echo:
     image: koo5/echo:latest
     networks:
