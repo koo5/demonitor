@@ -31,7 +31,7 @@ var checks = [];
 const node_ids = {}
 const node_aliases = {}
 var last_event_ts;
-const events_reversed = [];
+//const events_reversed = [];
 const events = [];
 const seen = {}
 var alerts = [];
@@ -213,7 +213,6 @@ async function init_orbitdb(config, ipfs, ready)
 
 async function run()
 {
-
 	let config = await init_config();
 	checks = await load_checks(config);
 	let ipfs = await init_ipfs(config);
@@ -221,20 +220,13 @@ async function run()
 	{
 		checks.map(start_reviewing_check_results);
 		setInterval(push_alerts_out, 1000 * 15);
+		initialize_checks();
 	});
-
 	start_http_server();
-
-
 	node_alias = config.node_alias;
 	if (node_alias)
 		await db.add({type:'alias', alias:node_alias});
-
-	initialize_checks();
-
-
 	setInterval(async () => await beep(ipfs), 30000);
-
 }
 
 
@@ -245,6 +237,8 @@ async function beep(ipfs)
 	const peers = await ipfs.swarm.peers({direction: true, streams: true, verbose: true, latency: true})
 	console.log(`${peers.length} peers.`);
 	//console.log(peers);
+	console.log('db_address:')
+	console.log(db.address.toString());
 }
 
 /*
@@ -431,7 +425,7 @@ function process_event(entry)
 	if (!seen[entry.hash])
 	{
 		events.push(entry);
-		events_reversed.unshift(entry);
+		//events_reversed.unshift(entry);
 		seen[entry.hash] = true
 		process_event2(entry);
 	}
@@ -482,16 +476,18 @@ function check_heartbeat(check)
 	const time_since_program_start = now - program_start_ts;
 	const propagation_max_delay = 30000;
 	const expected_at_most_before = check.interval + propagation_max_delay;
-	var time_since_last_heartbeat = now - last_event?.payload.value.unix_ts_ms || 0;
+	var time_since_last_heartbeat = now - (last_event?.payload.value.unix_ts_ms || 0);
 
 	const type = 'heartbeat_failure';
-	const ok = time_since_last_heartbeat <= expected_at_most_before && expected_at_most_before < time_since_program_start
+	const ok = time_since_last_heartbeat <= expected_at_most_before && expected_at_most_before < time_since_program_start;
+	console.log(ok);
 
-	if (ok)
+	if (!ok)
 	{
 		const alert = make_or_update_alert(type, check, now);
 		alert.time_since_last_heartbeat = time_since_last_heartbeat;
-		alert.last_event = last_event?.payload.value || null
+		alert.last_event = last_event?.payload.value || null;
+		alert.severity = 'warning'
 	}
 	else
 	{
@@ -529,10 +525,7 @@ function maybe_resolve_alert(type, check)
 {
 	const alert = find_last_alert(type, check);
 	if (alert)
-	{
-		if (!alert.is_resolved)
-			alert.is_resolved = true
-	}
+		alert.is_resolved = true;
 }
 
 
@@ -577,7 +570,7 @@ async function push_alerts_out()
 		{
 
 			const ts = new Date(alert.ts);
-			const end = new Date(alert.ts + 60 * 60000);//1hr
+			const end = new Date(alert.ts + 1 * 60000);
 			am_alerts.push(
 				// https://prometheus.io/docs/alerting/latest/clients/#sending-alerts
 				{
@@ -590,14 +583,14 @@ async function push_alerts_out()
 					"annotations": {
 						severity: alert.severity,
 						resolved: alert.is_resolved?.toString(),
-						time_since_last_heartbeat: alert.time_since_last_heartbeat?.toString(),
+						seconds_since_last_heartbeat: alert.time_since_last_heartbeat ? (alert.time_since_last_heartbeat / 1000).toString() : '-',
 						ts: ts.toString(),
 						streak: alert.streak?.toString()
 					},
 					"generatorURL": alert.generatorURL,
 
 					//"startsAt": ts.toISOString(),//rfcwhat?
-					"endsAt": end.toISOString(),
+					//"endsAt": end.toISOString(),
 
 				}
 			)
@@ -605,7 +598,7 @@ async function push_alerts_out()
 		}
 	})
 
-	console.log(`push_alerts_out: ${s(am_alerts)}`);
+	console.log(`push_alerts_out: ${ss(am_alerts)}`);
 	am_aa.postAlerts(am_alerts, error =>
 	{
 		if (error)
