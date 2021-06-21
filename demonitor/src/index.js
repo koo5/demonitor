@@ -103,11 +103,14 @@ async function init_ipfs(config)
 	}
 
 	//console.log(`ipfs: ${ss(ipfs)}`);
-	console.log(`ipfs ID: (for setting this node as bootstrap node for other nodes)`)
+	console.log(`ipfs PeerID: (for setting this node as bootstrap node for other nodes)`)
 	// this currently doesn't display your PeerId, run `ipfs id` to get it. Then combine it with your public IP, and add that into additional_bootstrap_nodes in your config
-	console.log(`  ${await ipfs.id()}`)
+	//console.log(`  ${await ipfs.id()}`)
+	// all i've ever wanted was to get the address that my other nodes can use to connect directly to this node. IPFS makes this AMAZINGLY COMPLICATED. Some commmand line clients can get it, some not... And in the end, you have to change the IP address to your public one yourself. Crazy bad.
+	console.log(await axios_post_with_timeout_workaround('http://ipfs:5001/api/v0/id', {}, {}));
 
-	console.log(`ipfs adressess: (for setting this node as bootstrap node for other nodes)`);
+
+	console.log(`ipfs swarm listening adressess: (for setting this node as bootstrap node for other nodes)`);
 	//console.log(await ipfs.swarm.localAddrs());
 	console.log((await ipfs.swarm.localAddrs()).map(a => a.toString()));
 
@@ -392,7 +395,7 @@ function initialize_periodic_check(task)
 
 async function axios_post_with_timeout_workaround(url, data, config)
 {
-	const timeout = config.timeout;
+	const timeout = config.timeout || 10000;
 	const source = axios.CancelToken.source();
 	let response = null;
 	setTimeout(() =>
