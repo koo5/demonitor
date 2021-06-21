@@ -101,7 +101,16 @@ async function init_ipfs(config)
 
 		ipfs = await create(ipfsOptions);
 	}
-	console.log(`ipfs: ${ipfs}`);
+
+	//console.log(`ipfs: ${ss(ipfs)}`);
+	console.log(`ipfs ID: (for setting this node as bootstrap node for other nodes)`)
+	// this currently doesn't display your PeerId, run `ipfs id` to get it. Then combine it with your public IP, and add that into additional_bootstrap_nodes in your config
+	console.log(`  ${await ipfs.id()}`)
+
+	console.log(`ipfs adressess: (for setting this node as bootstrap node for other nodes)`);
+	//console.log(await ipfs.swarm.localAddrs());
+	console.log((await ipfs.swarm.localAddrs()).map(a => a.toString()));
+
 
 	await ipfs.config.profiles.apply('lowpower');
 
@@ -133,11 +142,13 @@ async function init_orbitdb(config, ipfs)
 	const db_address = config.db_address || 'demonitor1';
 	const identity = await Identities.createIdentity({id: 'test1'})
 
+
 	/*console.log()
 	console.log('publicKey:')
 	console.log(identity.publicKey)*/
-	console.log('node identity:')
-	console.log(identity.id)
+	console.log('node identity (for OrbitDB write perms):')
+	console.log('  ' + identity.id)
+
 
 	const orbitdb = await OrbitDB.createInstance(ipfs, {identity})
 	/*console.log()

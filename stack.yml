@@ -56,6 +56,8 @@ services:
       replicas: 1
       restart_policy:
         condition: any
+    depends_on:
+      - alertmanager
 
  
   demonitor:
@@ -77,6 +79,9 @@ services:
       replicas: 1
       restart_policy:
         condition: any
+    depends_on:
+      - karma
+      - ipfs
 
  
   ipfs:
