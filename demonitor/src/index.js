@@ -602,7 +602,7 @@ async function push_alerts_out()
 					"annotations": {
 						severity: alert.severity,
 						resolved: alert.is_resolved?.toString(),
-						seconds_since_last_heartbeat: alert.time_since_last_heartbeat ? (alert.time_since_last_heartbeat / 1000).toString() : null,
+						seconds_since_last_heartbeat: alert.time_since_last_heartbeat ? (alert.time_since_last_heartbeat / 1000).toString() : undefined,
 						ts: ts.toString(),
 						streak: alert.streak?.toString()
 					},
