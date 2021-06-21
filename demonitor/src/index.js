@@ -35,7 +35,7 @@ var last_event_ts;
 const events = [];
 const seen = {}
 var alerts = [];
-const program_start_ts = Date.now();
+var program_start_ts = Date.now();
 var am_alerts = [];
 var node_alias;
 
@@ -371,11 +371,7 @@ function start_http_server()
 
 function initialize_checks()
 {
-	checks.forEach(ch =>
-	{
-		if (node_alias == ch.node)
-			initialize_periodic_check(ch);
-	});
+	checks.forEach(ch => initialize_periodic_check(ch));
 }
 
 function initialize_periodic_check(task)
@@ -401,8 +397,11 @@ async function axios_post_with_timeout_workaround(url, data, config)
 
 async function do_task(task)
 {
-	console.log(`do_task(${s(task.id)})`);
-	await emit_a_check_result((await axios.post('http://checker:3000/check', task)).data);
+	if (node_alias == ch.node)
+	{
+		console.log(`do_task(${s(task.id)})`);
+		await emit_a_check_result((await axios.post('http://checker:3000/check', task)).data);
+	}
 }
 
 function emit_a_check_result(event)
@@ -484,27 +483,34 @@ function check_heartbeat(check)
 {
 	console.log(`check_heartbeat(${JSON.stringify(check)})`)
 	const last_event = get_last_event(check);
+	console.log(`last_event: ${last_event}`);
 	const now = Date.now();
 	const time_since_program_start = now - program_start_ts;
 	const propagation_max_delay = 30000;
-	const expected_at_most_before = check.interval + propagation_max_delay;
+	const expected_at_most_before = check.interval * 2 + propagation_max_delay;
 	var time_since_last_heartbeat = now - (last_event?.payload.value.unix_ts_ms || 0);
 
-	const type = 'heartbeat_failure';
-	const ok = time_since_last_heartbeat <= expected_at_most_before && expected_at_most_before < time_since_program_start;
-	console.log(`ok: ${ok}`);
-
-	if (!ok)
+	if (expected_at_most_before < time_since_program_start)
 	{
-		const alert = make_or_update_alert(type, check, now);
-		alert.time_since_last_heartbeat = time_since_last_heartbeat;
-		alert.last_event = last_event?.payload.value || null;
-		alert.severity = 'warning'
+
+		const type = 'heartbeat_failure';
+		const ok = time_since_last_heartbeat <= expected_at_most_before;
+		console.log(`ok: ${ok}, ${time_since_last_heartbeat} <= ${expected_at_most_before}`);
+
+		if (!ok)
+		{
+			const alert = make_or_update_alert(type, check, now);
+			alert.time_since_last_heartbeat = time_since_last_heartbeat;
+			alert.last_event = last_event?.payload.value || null;
+			alert.severity = 'warning'
+		}
+		else
+		{
+			maybe_resolve_alert(type, check)
+		}
 	}
 	else
-	{
-		maybe_resolve_alert(type, check)
-	}
+		console.log(`too soon to check.`);
 }
 
 
@@ -595,7 +601,7 @@ async function push_alerts_out()
 					"annotations": {
 						severity: alert.severity,
 						resolved: alert.is_resolved?.toString(),
-						seconds_since_last_heartbeat: alert.time_since_last_heartbeat ? (alert.time_since_last_heartbeat / 1000).toString() : '-',
+						seconds_since_last_heartbeat: alert.time_since_last_heartbeat ? (alert.time_since_last_heartbeat / 1000).toString() : null,
 						ts: ts.toString(),
 						streak: alert.streak?.toString()
 					},

@@ -28,7 +28,7 @@ services:
 
  
   alertmanager:
-    image: koo5/configurable_alertmanager:latest
+    image: koo5/alertmanager:latest
     volumes:
       - "alertmanager_storage:/alertmanager"
       - "alertmanager_etc:/etc/alertmanager"
@@ -43,9 +43,9 @@ services:
 
 
   karma:
-    image: koo5/configurable_karma:latest
+    image: koo5/karma:latest
     volumes:
-      - "./configurable_karma/karma.yaml:/karma.yaml"
+      - "./karma/karma.yaml:/karma.yaml"
     environment:
       ALERTMANAGER_URI: "http://alertmanager:9093"
     networks:
