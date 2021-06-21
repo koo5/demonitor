@@ -118,7 +118,8 @@ async function init_ipfs(config)
 			await ipfs.swarm.connect(n)
 		} catch (e)
 		{
-			console.log(e)
+			console.log('error connecting to additional bootstrap node:')
+			console.log(e.message)
 
 		}
 	});
@@ -127,7 +128,7 @@ async function init_ipfs(config)
 
 }
 
-async function init_orbitdb(config, ipfs, ready)
+async function init_orbitdb(config, ipfs)
 {
 	const db_address = config.db_address || 'demonitor1';
 	const identity = await Identities.createIdentity({id: 'test1'})
@@ -165,49 +166,60 @@ async function init_orbitdb(config, ipfs, ready)
 
 
 	console.log('load...')
-	db.load(-1);
+	await db.load(-1);
+
+
 	//await print_events(db);
 	console.log()
 
 	// https://github.com/orbitdb/orbit-db/blob/main/API.md#replicated
 	db.events.on('replicated', async (address) =>
 	{
-		console.log('replicated'); /*await print_events(db);*/
+		console.log('replicated.'); /*await print_events(db);*/
 	})
+
 	db.events.on('replicate', (address) =>
 		console.log('going to replicate a part of the database with a peer...'))
+
 	db.events.on('replicate.progress', (address, hash, entry, progress, have) =>
 	{
 		console.log(`replicate.progress: ${address}, ${hash}, ${JSON.stringify(entry, null, '')}, ${progress}, ${have}`);
 		process_event(entry);
 	})
+
 	db.events.on('load', (dbname) =>
 		console.log('going to load the database...'))
+
 	db.events.on('load.progress', (address, hash, entry, progress, total) =>
 	{
 		if (progress % 100 == 0)
 			console.log(`load.progress: ${address}, ${hash}, ${progress} of ${total}`)
 		process_event(entry);
 	})
+
 	db.events.on('write', (address, entry, heads) =>
 	{
 		//console.log(`entry was added locally to the database: ${address}, ${JSON.stringify(entry,null,'')}, ${JSON.stringify(heads)}`);
 		console.log(`event was added locally to the database: ${JSON.stringify(entry.payload)}`);
 		process_event(entry);
 	})
+
 	db.events.on('peer', (peer) =>
 		console.log(`peer: ${peer}`))
+
 	db.events.on('closed', (dbname) =>
-		console.log('closed'))
+		console.log('closed.'))
+
 	db.events.on('peer.exchanged', (peer, address, heads) =>
 	{
 		console.log(`peer.exchanged: ${peer}, ${JSON.stringify(address, null, '')}, ${heads}`)
 	})
+
 	db.events.on('ready', () =>
 	{
-		console.log('database is now ready to be queried');
-		ready();
+		console.log('database is now ready to be queried.');
 	})
+
 	return db;
 }
 
@@ -216,12 +228,10 @@ async function run()
 	let config = await init_config();
 	checks = await load_checks(config);
 	let ipfs = await init_ipfs(config);
-	let db = await init_orbitdb(config, ipfs, () =>
-	{
-		checks.map(start_reviewing_check_results);
-		setInterval(push_alerts_out, 1000 * 15);
-		initialize_checks();
-	});
+	let db = await init_orbitdb(config, ipfs);
+	checks.map(start_reviewing_check_results);
+	setInterval(push_alerts_out, 1000 * 15);
+	initialize_checks();
 	start_http_server();
 	node_alias = config.node_alias;
 	if (node_alias)

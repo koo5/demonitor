@@ -34,14 +34,14 @@ def run():
 		cwd='echo')
 
 	subprocess.check_call(
-		shlex.split('docker build -t  "koo5/configurable_karma"  -f "./Dockerfile" .'),
-		cwd='configurable_karma')
+		shlex.split('docker build -t  "koo5/karma"  -f "karma/Dockerfile" .'))
+		
 	subprocess.check_call(
-		shlex.split('docker build -t  "koo5/configurable_alertmanager"  -f "./Dockerfile" .'),
+		shlex.split('docker build -t  "koo5/alertmanager"  -f "./Dockerfile" .'),
 		cwd='alertmanager')
+		
 	subprocess.check_call(
-		shlex.split('docker build -t  "koo5/demonitor"  -f "./Dockerfile" .'),
-		cwd='demonitor')
+		shlex.split('docker build -t  "koo5/demonitor"  -f "demonitor/Dockerfile" .'))
 
 	while True:
 		cmdxxx = "docker network ls | grep " + stack_name
