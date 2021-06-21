@@ -2,7 +2,7 @@ FROM node:14.16-alpine
 
 WORKDIR /usr/src/app
 
-COPY karma/package*.json ./
+COPY demonitor/package*.json ./
 RUN apk add --no-cache --virtual .build-deps alpine-sdk python3
 
 RUN npm -v
@@ -12,8 +12,10 @@ RUN npm install
 
 RUN apk del .build-deps
 
-COPY karma/src src
-COPY karma/start.sh /
+RUN apk add bash
+
+COPY demonitor/src src
+COPY demonitor/start.sh /
 COPY wait-for-it /wait-for-it
 
 VOLUME /usr/src/app/config.aml

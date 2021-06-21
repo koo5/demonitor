@@ -2,6 +2,7 @@ version: '3.7'
 
 services:
 
+ 
   checker:
     image: koo5/checker:latest
     networks:
@@ -13,6 +14,7 @@ services:
       restart_policy:
         condition: any
 
+ 
   echo:
     image: koo5/echo:latest
     networks:
@@ -24,6 +26,7 @@ services:
       restart_policy:
         condition: any
 
+ 
   alertmanager:
     image: koo5/configurable_alertmanager:latest
     volumes:
@@ -54,6 +57,7 @@ services:
       restart_policy:
         condition: any
 
+ 
   demonitor:
     image: koo5/demonitor:latest
     volumes:
@@ -74,6 +78,7 @@ services:
       restart_policy:
         condition: any
 
+ 
   ipfs:
     image: ipfs/go-ipfs:latest
     volumes:

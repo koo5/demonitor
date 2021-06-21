@@ -183,7 +183,8 @@ async function init_orbitdb(config, ipfs)
 
 	db.events.on('replicate.progress', (address, hash, entry, progress, have) =>
 	{
-		console.log(`replicate.progress: ${address}, ${hash}, ${JSON.stringify(entry, null, '')}, ${progress}, ${have}`);
+		//console.log(`replicate.progress: ${address}, ${hash}, ${JSON.stringify(entry, null, '')}, ${progress}, ${have}`);
+		console.log(`replicate.progress: ${address}, ${hash}, ${progress}, ${have}`);
 		process_event(entry);
 	})
 
@@ -229,10 +230,11 @@ async function run()
 	checks = await load_checks(config);
 	let ipfs = await init_ipfs(config);
 	let db = await init_orbitdb(config, ipfs);
+	start_http_server();
+	program_start_ts = Date.now();
 	checks.map(start_reviewing_check_results);
 	setInterval(push_alerts_out, 1000 * 15);
 	initialize_checks();
-	start_http_server();
 	node_alias = config.node_alias;
 	if (node_alias)
 		await db.add({type:'alias', alias:node_alias});
@@ -490,7 +492,7 @@ function check_heartbeat(check)
 
 	const type = 'heartbeat_failure';
 	const ok = time_since_last_heartbeat <= expected_at_most_before && expected_at_most_before < time_since_program_start;
-	console.log(ok);
+	console.log(`ok: ${ok}`);
 
 	if (!ok)
 	{

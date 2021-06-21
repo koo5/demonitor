@@ -1,0 +1,7 @@
+demonitor/node_modules
+demonitor/npm-debug.log
+demonitor/isolate-*
+demonitor/ipfs
+demonitor/orbitdb
+demonitor/.idea
+

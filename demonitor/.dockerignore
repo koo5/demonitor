@@ -1,7 +1,7 @@
-node_modules
-npm-debug.log
-isolate-*
-ipfs
-orbitdb
-.idea
+./node_modules
+./npm-debug.log
+./isolate-*
+./ipfs
+./orbitdb
+./.idea
 
