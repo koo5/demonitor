@@ -397,7 +397,7 @@ async function axios_post_with_timeout_workaround(url, data, config)
 
 async function do_task(task)
 {
-	if (node_alias == ch.node)
+	if (node_alias == task.node)
 	{
 		console.log(`do_task(${s(task.id)})`);
 		await emit_a_check_result((await axios.post('http://checker:3000/check', task)).data);
@@ -471,8 +471,9 @@ function process_event2(entry)
 function get_last_event(check)
 {
 	//console.log(`get_last_event(${s(check)})`);
-	for (const event of events)
+	for (var i = events.length - 1; i >= 0; i--)
 	{
+		const event = events[i];
 		//console.log(`(const ${s(event)} of events)`);
 		if (event.payload.value.check?.id == check.id)
 			return event;
