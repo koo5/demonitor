@@ -134,7 +134,7 @@ async function init_ipfs(config)
 			console.log(e.message)
 
 		}
-	}));
+	};
 	console.log('.....');
 	return ipfs;
 
