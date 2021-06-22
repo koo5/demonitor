@@ -1,3 +1,7 @@
+# what is this?
+A proof-of-concept of a server monitoring application, where your nodes connect and relay information ad-hoc through IPFS. Docker swarm file is provided that spins up IPFS, the monitoring app itself, Alertmanager and Karma. The monitoring app periodically runs checks defined in checks.js, and saves the results into an OrbitDB eventlog, where your other nodes can find it and feed alerts into Alertmanager.
+
+
 # tech choices
 
 ## other p2p db tech considered:
