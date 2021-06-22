@@ -123,7 +123,7 @@ async function init_ipfs(config)
 	console.log();
 	additional_bootstrap_nodes.forEach(n => ipfs.bootstrap.add(n));
 
-	await (config.additional_bootstrap_nodes || []).forEach(async (n) =>
+	await ((config.additional_bootstrap_nodes || []).forEach(async (n) =>
 	{
 		try
 		{
@@ -134,7 +134,7 @@ async function init_ipfs(config)
 			console.log(e.message)
 
 		}
-	});
+	}));
 	console.log('.....');
 	return ipfs;
 
@@ -153,10 +153,11 @@ async function init_orbitdb(config, ipfs)
 	console.log('  ' + identity.id)
 
 
+	console.log('createInstance..');
 	const orbitdb = await OrbitDB.createInstance(ipfs, {identity})
-	/*console.log()
+	console.log()
 	console.log('orbitdb:')
-	console.log(orbitdb)*/
+	console.log(orbitdb)
 
 
 	const write_permission = config.write_permission || ['*'];
