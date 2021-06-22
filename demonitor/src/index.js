@@ -123,7 +123,7 @@ async function init_ipfs(config)
 	console.log();
 	additional_bootstrap_nodes.forEach(n => ipfs.bootstrap.add(n));
 
-	for (n of (config.additional_bootstrap_nodes || []))
+	for (const n of (config.additional_bootstrap_nodes || []))
 	{
 		try
 		{
