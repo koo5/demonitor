@@ -135,7 +135,7 @@ async function init_ipfs(config)
 
 		}
 	});
-
+	console.log('.....');
 	return ipfs;
 
 }
@@ -144,7 +144,7 @@ async function init_orbitdb(config, ipfs)
 {
 	const db_address = config.db_address || 'demonitor1';
 	const identity = await Identities.createIdentity({id: 'test1'})
-
+	console.log('..');
 
 	/*console.log()
 	console.log('publicKey:')
@@ -243,6 +243,7 @@ async function run()
 	let config = await init_config();
 	checks = await load_checks(config);
 	let ipfs = await init_ipfs(config);
+	console.log('...');
 	let db = await init_orbitdb(config, ipfs);
 	start_http_server();
 	program_start_ts = Date.now();
