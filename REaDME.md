@@ -26,7 +26,7 @@ For the purposes of demonitor, blockchain isn't needed, though. We can simply tr
 After program start, the database is "loaded". Loading multiple thousand entries takes minutes.  
 
 ### IPFS
-there are two implementations of IPFS: js-ipfs, and go-ipfs. It's possible to run js-ipfs in-process. It is not quite mature, though. go-ipfs is set up to run as a standalone docker container.
+there are two implementations of IPFS: js-ipfs, and go-ipfs. It's possible to run js-ipfs in-process. It is not quite mature, though, and causes high cpu usage. go-ipfs is set up to run as a standalone docker container. 
 
 
 ### swarm key
@@ -112,3 +112,5 @@ https://github.com/libp2p/js-libp2p-webrtc-star
 i feel that heartbeat should be a property of individual checks, rather than of the agent itself, because an agent should be expected to be offline sometimes (for example on a suspended development computer) 
 
 
+# problems
+orbitdb eventlog() seems to get stuck
