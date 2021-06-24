@@ -347,7 +347,7 @@ function start_http_server()
 			result += '<p>'
 			result += moment(e.ts).toISOString()
 			result += ':<br><pre>'
-			result += JSON.stringify(e, null, ' ');
+			result += JSON.stringify(e, null, '    ');
 			result += '</pre></p>'
 		})
 		result += '</body></html>';
