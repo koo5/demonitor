@@ -477,6 +477,8 @@ function process_event2(entry)
 				alert.severity = 'critical';
 			else
 				alert.severity = 'info';
+			alert.error = event.error;
+
 		}
 		else
 		{
@@ -506,7 +508,8 @@ function check_heartbeat(check)
 	const time_since_program_start = now - program_start_ts;
 	const propagation_max_delay = 30000;
 	const expected_at_most_before = check.interval * 2 + propagation_max_delay;
-	var time_since_last_heartbeat = now - (last_event?.payload.value.unix_ts_ms || 0);
+	let last_event_unix_ts_ms = last_event?.payload.value.unix_ts_ms;
+	var time_since_last_heartbeat = now - (last_event_unix_ts_ms || 0);
 
 	if (expected_at_most_before < time_since_program_start)
 	{
@@ -518,7 +521,7 @@ function check_heartbeat(check)
 		if (!ok)
 		{
 			const alert = make_or_update_alert(type, check, now);
-			alert.time_since_last_heartbeat = time_since_last_heartbeat;
+			alert.time_since_last_heartbeat = last_event_unix_ts_ms ? time_since_last_heartbeat : undefined
 			alert.last_event = last_event?.payload.value || null;
 			alert.severity = 'warning'
 		}
@@ -550,10 +553,11 @@ function make_or_update_alert(type, check, now)
 			generatorURL: `/checks/${check.id}`,
 			check,
 			type,
-			ts: now
+			first_occurence_ts: now
 		}
 		alerts.unshift(alert)
 	}
+	alert.ts = now;
 	return alert
 }
 
@@ -605,8 +609,14 @@ async function push_alerts_out()
 		if (!alert.is_resolved)
 		{
 
-			const ts = new Date(alert.ts);
-			const end = new Date(alert.ts + 1 * 60000);
+			const ts = alert.ts ? new Date(alert.ts) : undefined;
+			let first_occurence_ts = alert.first_occurence_ts ? new Date(alert.first_occurence_ts) : undefined;
+			//const end = new Date(alert.ts + 1 * 60000);
+			let seconds_since_last_heartbeat;
+			if (alert.type == 'heartbeat_failure')
+			{
+				seconds_since_last_heartbeat = alert.time_since_last_heartbeat ? (alert.time_since_last_heartbeat / 1000).toString() : "never";
+			}
 			am_alerts.push(
 				// https://prometheus.io/docs/alerting/latest/clients/#sending-alerts
 				{
@@ -619,9 +629,10 @@ async function push_alerts_out()
 					"annotations": {
 						severity: alert.severity,
 						resolved: alert.is_resolved?.toString(),
-						seconds_since_last_heartbeat: alert.time_since_last_heartbeat ? (alert.time_since_last_heartbeat / 1000).toString() : undefined,
-						ts: ts.toString(),
-						ts_str_utc: ts.toISOString(),
+						seconds_since_last_heartbeat,
+						ts: ts?.toString(),
+						first_occurence_ts: first_occurence_ts?.toString(),
+						//ts_str_utc: ts.toISOString(),
 						streak: alert.streak?.toString()
 					},
 					"generatorURL": alert.generatorURL,
