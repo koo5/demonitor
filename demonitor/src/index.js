@@ -31,7 +31,6 @@ var checks = [];
 const node_ids = {}
 const node_aliases = {}
 var last_event_ts;
-//const events_reversed = [];
 const events = [];
 const seen = {}
 var alerts = [];
@@ -182,7 +181,7 @@ async function init_orbitdb(config, ipfs)
 
 
 	console.log('load...')
-	await db.load(-1);
+	await db.load(100);
 
 
 	//await print_events(db);
@@ -276,7 +275,7 @@ function get_events(db)
 	return db.iterator({limit: -1}).collect();
 }
 */
-async function print_events()
+/*async function print_events()
 {
 	console.log()
 	console.log('items:')
@@ -290,7 +289,7 @@ async function print_events()
 	});
 	console.log('(' + events.length + ')')
 }
-
+*/
 
 (async () =>
 {
@@ -315,7 +314,7 @@ function start_http_server()
 	{
 		var result = '<html><body>';
 		//const events = get_events(db);
-		events.forEach((e) =>
+		db.iterator({limit:100}).collect().forEach((e) =>
 		{
 			result += '<pre>'
 			result += JSON.stringify(e.payload.value, null, ' ');
@@ -329,7 +328,7 @@ function start_http_server()
 	{
 		var result = '<html><body>';
 		//const events = get_events(db);
-		events.forEach((e) =>
+		db.iterator({limit:100}).collect().forEach((e) =>
 		{
 			result += '<pre>'
 			result += JSON.stringify(e, null, ' ');
@@ -354,7 +353,7 @@ function start_http_server()
 		res.send(result)
 	})
 
-	app.get('/events_full/:hash', function (req, res)
+	/*app.get('/events_full/:hash', function (req, res)
 	{
 		var result = '<html><body>';
 		events.forEach((e) =>
@@ -368,8 +367,7 @@ function start_http_server()
 		})
 		result += '</body></html>';
 		res.send(result)
-
-	})
+	})*/
 
 	app.use(function (req, res, next)
 	{
@@ -445,16 +443,16 @@ function process_event(entry)
 	const event = entry.payload.value;
 
 	if (last_event_ts > event.unix_ts_ms)
-		throw('this shouldnt happen');
+		throw('this shouldnt happen...or it should, hmm');
 
 	if (event.type == "alias")
 		set_alias(event.alias, entry.identity.id)
 
-	if (!seen[entry.hash])
+	//if (!seen[entry.hash])
 	{
-		events.push(entry);
+		//events.push(entry);
 		//events_reversed.unshift(entry);
-		seen[entry.hash] = true
+		//seen[entry.hash] = true
 		process_event2(entry);
 	}
 
@@ -490,14 +488,17 @@ function process_event2(entry)
 function get_last_event(check)
 {
 	//console.log(`get_last_event(${s(check)})`);
-	for (var i = events.length - 1; i >= 0; i--)
+	for (const event of db.iterator({limit:100}))
+	//.forEach((event) =>
+//	for (var i = events.length - 1; i >= 0; i--)
 	{
-		const event = events[i];
+		//const event = events[i];
 		//console.log(`(const ${s(event)} of events)`);
 		if (event.payload.value.check?.id == check.id)
 			return event;
-	}
+	};
 }
+
 
 function check_heartbeat(check)
 {
@@ -521,7 +522,8 @@ function check_heartbeat(check)
 		if (!ok)
 		{
 			const alert = make_or_update_alert(type, check, now);
-			alert.time_since_last_heartbeat = last_event_unix_ts_ms ? time_since_last_heartbeat : undefined
+			alert.time_since_last_heartbeat = last_event_unix_ts_ms ? time_since_last_heartbeat : undefined,
+			alert.seconds_since_last_heartbeat = alert.time_since_last_heartbeat ? (alert.time_since_last_heartbeat / 1000).toString() : "never";
 			alert.last_event = last_event?.payload.value || null;
 			alert.severity = 'warning'
 		}
@@ -550,14 +552,18 @@ function make_or_update_alert(type, check, now)
 				throw('this shouldnt happen');
 		})
 		alert = {
-			generatorURL: `/checks/${check.id}`,
+			//generatorURL: `/checks/${check.id}`,
 			check,
 			type,
-			first_occurence_ts: now
+			first_occurence_ts: now,
+			first_occurence_ts_str: ts_str(now),
 		}
-		alerts.unshift(alert)
+		alerts.unshift(alert);
+		if (alert.length > 100)
+			alerts.pop();
 	}
 	alert.ts = now;
+	alert.ts_str = ts_str(now);
 	return alert
 }
 
@@ -605,18 +611,8 @@ async function push_alerts_out()
 
 	alerts.forEach(alert =>
 	{
-		//if (!alert.is_resolved && alert.severity != 'info')
 		if (!alert.is_resolved)
 		{
-
-			const ts = alert.ts ? new Date(alert.ts) : undefined;
-			let first_occurence_ts = alert.first_occurence_ts ? new Date(alert.first_occurence_ts) : undefined;
-			//const end = new Date(alert.ts + 1 * 60000);
-			let seconds_since_last_heartbeat;
-			if (alert.type == 'heartbeat_failure')
-			{
-				seconds_since_last_heartbeat = alert.time_since_last_heartbeat ? (alert.time_since_last_heartbeat / 1000).toString() : "never";
-			}
 			am_alerts.push(
 				// https://prometheus.io/docs/alerting/latest/clients/#sending-alerts
 				{
@@ -625,13 +621,16 @@ async function push_alerts_out()
 						"node": alert.check.node,
 						"target": alert.check.target,
 						type: alert.check.type,
+						error: alert.error
 					},
 					"annotations": {
 						severity: alert.severity,
 						resolved: alert.is_resolved?.toString(),
-						seconds_since_last_heartbeat,
-						ts: ts?.toString(),
-						first_occurence_ts: first_occurence_ts?.toString(),
+						seconds_since_last_heartbeat: alert.seconds_since_last_heartbeat,
+						ts: alert.ts?.toString(),
+						ts_str: alert.ts_str,
+						first_occurence_ts: alert.first_occurence_ts?.toString(),
+						first_occurence_ts_str: alert.first_occurence_ts_str,
 						//ts_str_utc: ts.toISOString(),
 						streak: alert.streak?.toString()
 					},
@@ -639,10 +638,8 @@ async function push_alerts_out()
 
 					//"startsAt": ts.toISOString(),//rfcwhat?
 					//"endsAt": end.toISOString(),
-
 				}
 			)
-
 		}
 	})
 
@@ -657,6 +654,12 @@ async function push_alerts_out()
 	})
 }
 
+
+function ts_str(x)
+{
+	if (!x) return;
+	return new Date(x).toString();
+}
 
 /*
 todo:

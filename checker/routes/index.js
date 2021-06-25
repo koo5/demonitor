@@ -1,22 +1,21 @@
 const cycle = require('../cycle');
-const axios = require('axios');
+const got = require('got');
 var express = require('express');
 var router = express.Router();
 
-
-async function axios_post_with_timeout_workaround(url, data, config)
+async function post(url, data, config)
 {
 	const timeout = config.timeout;
-	const source = axios.CancelToken.source();
-	let response = null;
-	setTimeout(() =>
-	{
-		if (response === null)
-		{
-			source.cancel(`timeout of ${timeout}ms`);
-		}
-	}, timeout);
-	response = await axios.post(url, data, {cancelToken: source.token});
+	response = await got(url, {
+		json: data,
+		responseType: 'json',
+		method: 'POST',
+		timeout: config.timeout,
+		retry: {methods:['POST']},
+		username: config.user,
+		password: config.pass,
+
+	});
 	return response;
 }
 
@@ -45,21 +44,21 @@ router.post('/check', async function (req, res, next)
 		try
 		{
 			const timeout = task.timeout || 10 * 60000;
-			result = await axios_post_with_timeout_workaround(
+			result = await post(
 				task.target + '/chat',
 				{
 					"type": "sbe",
 					"current_state": []
 				},
-				{timeout});
-			result = {status: result.status, data: result.data}
+				{timeout, user:check.http_basicauth_user,pass:http_basicauth_pass});
+			result = {status: result.status, data: result.body}
 			console.log(s(result));
 			if (result.status == 200 && result.data.status != 'error')
 				ok = true;
 		} catch (e)
 		{
-			error = e.message;
-			console.log(error)
+			error = e;
+			console.log(ss(e))
 		}
 
 	}
