@@ -63,7 +63,7 @@ services:
   demonitor:
     image: koo5/demonitor:latest
     volumes:
-      - "./demonitor/config.aml:/usr/src/app/config.aml"
+      - "./demonitor/config.aml:/usr/src/app/demonitor/config.aml"
       - "jsipfs:/usr/src/app/ipfs"
       - "orbitdb:/usr/src/app/orbitdb"
     environment:

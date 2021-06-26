@@ -18,7 +18,7 @@ var archieml = require('archieml');
 const OrbitDB = require('orbit-db')
 const Identities = require('orbit-db-identity-provider')
 var moment = require('moment');
-const axios = require('axios');
+const utils = require('@koo5/utils');
 const cycle = require('./cycle');
 const express = require('express')
 const alertmanager_api = require('@koo5/alertmanager_api');
@@ -101,12 +101,12 @@ async function init_ipfs(config)
 		ipfs = await create(ipfsOptions);
 	}
 
-	//console.log(`ipfs: ${ss(ipfs)}`);
+	//console.log(`ipfs: ${utils.ss(ipfs)}`);
 	console.log(`ipfs PeerID: (for setting this node as bootstrap node for other nodes)`)
 	// this currently doesn't display your PeerId, run `ipfs id` to get it. Then combine it with your public IP, and add that into additional_bootstrap_nodes in your config
 	//console.log(`  ${await ipfs.id()}`)
 	// all i've ever wanted was to get the address that my other nodes can use to connect directly to this node. IPFS makes this AMAZINGLY COMPLICATED. Some commmand line clients can get it, some not... And in the end, you have to change the IP address to your public one yourself. Crazy bad.
-	console.log((await axios_post_with_timeout_workaround('http://ipfs:5001/api/v0/id', {}, {})).data);
+	console.log((await utils.post('http://ipfs:5001/api/v0/id', {}, {})).data);
 
 
 	console.log(`ipfs swarm listening adressess: (for setting this node as bootstrap node for other nodes)`);
@@ -361,7 +361,7 @@ function start_http_server()
 			if (e.hash == req.params.hash)
 			{
 				result += '<pre>'
-				result += ss(e);
+				result += utils.ss(e);
 				result += '</pre>'
 			}
 		})
@@ -394,28 +394,12 @@ function initialize_periodic_check(task)
 	setInterval(async () => await do_task(task), task.interval);
 }
 
-async function axios_post_with_timeout_workaround(url, data, config)
-{
-	const timeout = config.timeout || 10000;
-	const source = axios.CancelToken.source();
-	let response = null;
-	setTimeout(() =>
-	{
-		if (response === null)
-		{
-			source.cancel(`timeout of ${timeout}ms`);
-		}
-	}, timeout);
-	response = await axios.post(url, data, {cancelToken: source.token});
-	return response;
-}
-
 async function do_task(task)
 {
 	if (node_alias == task.node)
 	{
-		console.log(`do_task(${s(task.id)})`);
-		await emit_a_check_result((await axios.post('http://checker:3000/check', task)).data);
+		console.log(`do_task(${utils.s(task.id)})`);
+		await emit_a_check_result((await utils.post('http://checker:3000/check', task)).data);
 	}
 }
 
@@ -439,7 +423,7 @@ function set_alias(alias, id)
 
 function process_event(entry)
 {
-	//console.log(`process_event(${s(entry)})`);
+	//console.log(`process_event(${utils.s(entry)})`);
 	const event = entry.payload.value;
 
 	if (last_event_ts > event.unix_ts_ms)
@@ -462,7 +446,7 @@ function process_event(entry)
 function process_event2(entry)
 {
 	const event = entry.payload.value;
-	console.log(`process_event2(${s(event)})`);
+	console.log(`process_event2(${utils.s(event)})`);
 	if (event.type == 'check_result')
 	{
 		const check = event.check
@@ -487,13 +471,13 @@ function process_event2(entry)
 
 function get_last_event(check)
 {
-	//console.log(`get_last_event(${s(check)})`);
+	//console.log(`get_last_event(${utils.s(check)})`);
 	for (const event of db.iterator({limit:100}))
 	//.forEach((event) =>
 //	for (var i = events.length - 1; i >= 0; i--)
 	{
 		//const event = events[i];
-		//console.log(`(const ${s(event)} of events)`);
+		//console.log(`(const ${utils.s(event)} of events)`);
 		if (event.payload.value.check?.id == check.id)
 			return event;
 	};
@@ -585,16 +569,6 @@ function find_last_alert(type, check)
 	}
 }
 
-function s(x)
-{
-	return JSON.stringify(cycle.decycle(x));
-}
-
-function ss(x)
-{
-	return JSON.stringify(cycle.decycle(x), null, ' ');
-}
-
 
 async function push_alerts_out()
 {
@@ -643,13 +617,13 @@ async function push_alerts_out()
 		}
 	})
 
-	console.log(`push_alerts_out: ${ss(am_alerts)}`);
+	console.log(`push_alerts_out: ${utils.ss(am_alerts)}`);
 	am_aa.postAlerts(am_alerts, error =>
 	{
 		if (error)
 		{
 			console.log(error);
-			db.add({type: 'demonitor_warning', msg: s(error)})
+			db.add({type: 'demonitor_warning', msg: utils.s(error)})
 		}
 	})
 }

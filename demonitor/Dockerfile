@@ -1,6 +1,11 @@
 FROM node:14.16-alpine
 
+
 WORKDIR /usr/src/app
+COPY utils /usr/src/app/utils/
+COPY wait-for-it /wait-for-it
+
+WORKDIR /usr/src/app/demonitor
 
 COPY demonitor/package*.json ./
 RUN apk add --no-cache --virtual .build-deps alpine-sdk python3
@@ -16,9 +21,8 @@ RUN apk add bash
 
 COPY demonitor/src src
 COPY demonitor/start.sh /
-COPY wait-for-it /wait-for-it
 
-VOLUME /usr/src/app/config.aml
+VOLUME /usr/src/app/demonitor/config.aml
 
 EXPOSE 3223
 EXPOSE 4002

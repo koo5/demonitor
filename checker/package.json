@@ -6,6 +6,7 @@
     "start": "node ./bin/www"
   },
   "dependencies": {
+    "@koo5/utils": "file:../utils",
     "axios": "^0.21.1",
     "cookie-parser": "~1.4.4",
     "cycle": "^1.0.3",
