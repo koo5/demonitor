@@ -589,9 +589,9 @@ async function push_alerts_out()
 				{
 					"labels": {
 						"alertname": alert.type,
-						"node": alert.check.node,
-						"target": alert.check.target,
-						type: alert.check.type,
+						"node": alert.check?.node,
+						"target": alert.check?.target,
+						type: alert.check?.type,
 						error: alert.error
 					},
 					"annotations": {

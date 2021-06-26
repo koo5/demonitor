@@ -24,15 +24,18 @@ router.post('/check', async function (req, res, next)
 					"current_state": []
 				},
 				{timeout, user:check.http_basicauth_user,pass:http_basicauth_pass});
+
 			console.log(utils.ss(result));
-			result = {status: result.status, data: result.body}
-			console.log(utils.s(result));
+			//result = {status: result.status, data: result.body}
+			//console.log(utils.s(result));
 			if (result.status == 200 && result.data.status != 'error')
 				ok = true;
 		} catch (e)
 		{
+
+			console.log(utils.ss(e));
 			error = e;
-			console.log(utils.ss(e))
+
 		}
 	}
 
