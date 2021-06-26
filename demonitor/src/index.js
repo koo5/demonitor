@@ -396,7 +396,7 @@ async function do_task(task)
 	if (node_alias == task.node)
 	{
 		console.log(`do_task(${utils.s(task.id)})`);
-		await emit_a_check_result((await utils.post('http://checker:3000/check', task)).data);
+		await emit_a_check_result((await utils.post('http://checker:3000/check', task, {timeout:1000})).data);
 	}
 }
 

@@ -6,13 +6,17 @@ WORKDIR /home/node/app
 USER node
 
 COPY checker/package*.json ./checker/
+COPY utils/package*.json /home/node/app/utils/
 WORKDIR /home/node/app/checker
 RUN npm install
 
+
+COPY utils /home/node/app/utils/
 COPY checker /home/node/app/checker/
 #COPY checker/bin/www /home/node/app/checker/bin/
 #COPY checker/routes /home/node/app/checker/
-COPY utils /home/node/app/utils/
+
+
 
 EXPOSE 3000
 WORKDIR /home/node/app/checker

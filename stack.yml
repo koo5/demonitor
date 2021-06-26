@@ -7,8 +7,8 @@ services:
     image: koo5/checker:latest
     networks:
       - frontend
-    ports:
-      - 3000
+#    ports:
+#      - 3000
     deploy:
       replicas: 1
       restart_policy:

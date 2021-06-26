@@ -24,9 +24,9 @@ router.post('/check', async function (req, res, next)
 					"current_state": []
 				},
 				{timeout, user:check.http_basicauth_user,pass:http_basicauth_pass});
-			console.log(ss(result));
+			console.log(utils.ss(result));
 			result = {status: result.status, data: result.body}
-			console.log(s(result));
+			console.log(utils.s(result));
 			if (result.status == 200 && result.data.status != 'error')
 				ok = true;
 		} catch (e)
@@ -36,7 +36,7 @@ router.post('/check', async function (req, res, next)
 		}
 	}
 
-	res.send({ok, check: task, unix_ts_ms: Date.now(), result: ss(result), error: ss(error)});
+	res.send({ok, check: task, unix_ts_ms: Date.now(), result: utils.ss(result), error: utils.ss(error)});
 });
 
 
