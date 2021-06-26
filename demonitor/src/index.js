@@ -19,7 +19,6 @@ const OrbitDB = require('orbit-db')
 const Identities = require('orbit-db-identity-provider')
 var moment = require('moment');
 const utils = require('@koo5/utils');
-const cycle = require('./cycle');
 const express = require('express')
 const alertmanager_api = require('@koo5/alertmanager_api');
 const am = alertmanager_api.ApiClient.instance;
@@ -31,8 +30,8 @@ var checks = [];
 const node_ids = {}
 const node_aliases = {}
 var last_event_ts;
-const events = [];
-const seen = {}
+//const events = [];
+//const seen = {}
 var alerts = [];
 var program_start_ts = Date.now();
 var am_alerts = [];
@@ -112,9 +111,6 @@ async function init_ipfs(config)
 	console.log(`ipfs swarm listening adressess: (for setting this node as bootstrap node for other nodes)`);
 	//console.log(await ipfs.swarm.localAddrs());
 	console.log((await ipfs.swarm.localAddrs()).map(a => a.toString()));
-
-
-	await ipfs.config.profiles.apply('lowpower');
 
 	const additional_bootstrap_nodes = config.additional_bootstrap_nodes || [];
 	console.log('additional_bootstrap_nodes:')
@@ -255,6 +251,7 @@ async function run()
 	if (node_alias)
 		await db.add({type:'alias', alias:node_alias});
 	setInterval(async () => await beep(ipfs), 30000);
+	ipfs.config.profiles.apply('lowpower');
 }
 
 
