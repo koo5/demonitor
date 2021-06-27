@@ -560,7 +560,7 @@ function find_last_alert(type, check)
 {
 	for (const alert of alerts)
 	{
-		if (check.id == alert.check.id)
+		if (check.id == alert.check?.id)
 			if (alert.type == type)
 				return alert;
 	}
