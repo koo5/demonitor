@@ -558,6 +558,7 @@ function maybe_resolve_alert(type, check)
 
 function find_last_alert(type, check)
 {
+	if (check.id == undefined) return undefined;
 	for (const alert of alerts)
 	{
 		if (check.id == alert.check?.id)
