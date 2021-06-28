@@ -527,11 +527,11 @@ function make_or_update_alert(type, check, now)
 	}
 	else
 	{
-		alerts.forEach(a =>
+		/*alerts.forEach(a =>
 		{
 			if (!a.is_resolved && a.check == check && a.type == type)
 				throw('this shouldnt happen');
-		})
+		})*/
 		alert = {
 			//generatorURL: `/checks/${check.id}`,
 			check,
@@ -558,7 +558,7 @@ function maybe_resolve_alert(type, check)
 
 function find_last_alert(type, check)
 {
-	if (check.id == undefined) return undefined;
+	if (check?.id == undefined) return undefined;
 	for (const alert of alerts)
 	{
 		if (check.id == alert.check?.id)
