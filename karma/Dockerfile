@@ -1,4 +1,4 @@
-FROM ghcr.io/prymitive/karma:v0.86
+FROM ghcr.io/prymitive/karma:latest
 
 
 #RUN apk add bash

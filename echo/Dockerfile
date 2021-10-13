@@ -5,6 +5,6 @@ WORKDIR $GOPATH/src/app
 COPY . .
 RUN go get -d -v ./...
 RUN go install -v ./...
-EXPOSE 5001
+EXPOSE 6006
 CMD ["/go/bin/app"]
 

@@ -5,6 +5,10 @@
       <excludeFolder url="file://$MODULE_DIR$/temp" />
       <excludeFolder url="file://$MODULE_DIR$/.tmp" />
       <excludeFolder url="file://$MODULE_DIR$/tmp" />
+      <excludeFolder url="file://$MODULE_DIR$/misc" />
+      <excludeFolder url="file://$MODULE_DIR$/echo" />
+      <excludeFolder url="file://$MODULE_DIR$/wait-for-it" />
+      <excludeFolder url="file://$MODULE_DIR$/utils" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />

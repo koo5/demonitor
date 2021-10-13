@@ -159,7 +159,7 @@ async function init_orbitdb(config, ipfs)
 	console.log('write_permission:')
 	console.log(write_permission)
 
-	console.log('orbitdb.log...');
+	console.log(`initializing orbitdb.log({db_address})...`);
 	db = await orbitdb.log(db_address,
 		{
 			create: config.create,
@@ -376,7 +376,7 @@ function start_http_server()
 
 	app.listen(port, () =>
 	{
-		console.log(`Example app listening at http://localhost:${port}`)
+		console.log(`demonitor listening at http://localhost:${port}`)
 	})
 
 }

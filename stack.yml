@@ -30,6 +30,8 @@ services:
       - "alertmanager_etc:/etc/alertmanager"
     networks:
       - frontend
+    ports:
+      - "9093:9093"
     deploy:
       replicas: 1
       restart_policy:
@@ -67,8 +69,8 @@ services:
       - frontend
     ports:
       - "3223:3223"
-      - "4002:4002"
-      - "4003:4003"
+#      - "4002:4002"
+#      - "4003:4003"
     deploy:
       replicas: 1
       restart_policy:
@@ -89,7 +91,8 @@ services:
       - frontend
     ports:
       - "4001:4001"
-      - "5002:8080"
+#      - "5002:8080"
+      - "5001:5001"
     #secrets:
     #  - IPFS_SWARM_KEY_FILE
     command: daemon --migrate=true --enable-pubsub-experiment
