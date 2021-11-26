@@ -4,19 +4,9 @@
 var checks_module = require('./checks');
 
 
-const IPFS_DEPLOYMENT_METHOD = 'docker-go-ipfs'
-
-
-if (IPFS_DEPLOYMENT_METHOD == 'docker-go-ipfs')
-	var {create} = require('ipfs-http-client')
-else
-	var {create} = require('ipfs')
-
 
 var fs = require('fs');
 var archieml = require('archieml');
-const OrbitDB = require('orbit-db')
-const Identities = require('orbit-db-identity-provider')
 var moment = require('moment');
 const utils = require('@koo5/utils');
 const express = require('express')
@@ -61,233 +51,25 @@ async function init_config()
 }
 
 
-async function init_ipfs(config)
-{
-	const default_bootstrap_override = config.default_bootstrap_override;
-	console.log('default_bootstrap_override:')
-	console.log(default_bootstrap_override)
-	console.log()
-
-
-	var ipfs;
-	if (IPFS_DEPLOYMENT_METHOD == 'docker-go-ipfs')
-		ipfs = create('http://ipfs:5001')
-	else
-	{
-		// https://github.com/ipfs/js-ipfs/blob/7cf404c8fd11888fa803c6167bd2ec62d94a2b34/docs/MODULE.md
-		const ipfsOptions = {
-			EXPERIMENTAL: {
-				pubsub: true,
-				dht: true
-			},
-			// https://github.com/ipfs/js-ipfs/blob/7cf404c8fd11888fa803c6167bd2ec62d94a2b34/docs/CONFIG.md#addresses
-			config: {
-				//Bootstrap: default_bootstrap_override
-				Pubsub:
-					{
-						Router: 'gossipsub'
-					},
-				/*relay: {
-					enabled: true, // enable relay dialer/listener (STOP)
-					hop: {
-						enabled: true // make this node a relay (HOP)
-					}
-				}*/
-			},
-			repo: './ipfs'
-		}
-
-		ipfs = await create(ipfsOptions);
-	}
-
-	//console.log(`ipfs: ${utils.ss(ipfs)}`);
-	console.log(`ipfs PeerID: (for setting this node as bootstrap node for other nodes)`)
-	// this currently doesn't display your PeerId, run `ipfs id` to get it. Then combine it with your public IP, and add that into additional_bootstrap_nodes in your config
-	//console.log(`  ${await ipfs.id()}`)
-	// all i've ever wanted was to get the address that my other nodes can use to connect directly to this node. IPFS makes this AMAZINGLY COMPLICATED. Some commmand line clients can get it, some not... And in the end, you have to change the IP address to your public one yourself. Crazy bad.
-	console.log((await utils.post('http://ipfs:5001/api/v0/id', {}, {})).data);
-
-
-	console.log(`ipfs swarm listening adressess: (for setting this node as bootstrap node for other nodes)`);
-	//console.log(await ipfs.swarm.localAddrs());
-	console.log((await ipfs.swarm.localAddrs()).map(a => a.toString()));
-
-	const additional_bootstrap_nodes = config.additional_bootstrap_nodes || [];
-	console.log('additional_bootstrap_nodes:')
-	console.log(additional_bootstrap_nodes)
-	console.log();
-	additional_bootstrap_nodes.forEach(n => ipfs.bootstrap.add(n));
-
-	for (const n of (config.additional_bootstrap_nodes || []))
-	{
-		try
-		{
-			await ipfs.swarm.connect(n)
-		} catch (e)
-		{
-			console.log('error connecting to additional bootstrap node:')
-			console.log(e.message)
-
-		}
-	};
-	console.log('.....');
-	return ipfs;
-
-}
-
-async function init_orbitdb(config, ipfs)
-{
-	const db_address = config.db_address || 'demonitor1';
-	const identity = await Identities.createIdentity({id: 'test1'})
-	console.log('..');
-
-	/*console.log()
-	console.log('publicKey:')
-	console.log(identity.publicKey)*/
-	console.log('node identity (for OrbitDB write perms):')
-	console.log('  ' + identity.id)
-
-
-	console.log('createInstance..');
-	const orbitdb = await OrbitDB.createInstance(ipfs, {identity})
-	console.log()
-	console.log('orbitdb:')
-	console.log(orbitdb.id)
-
-
-	const write_permission = config.write_permission || ['*'];
-	console.log('write_permission:')
-	console.log(write_permission)
-
-	console.log(`initializing orbitdb.log({db_address})...`);
-	db = await orbitdb.log(db_address,
-		{
-			create: config.create,
-			overwrite: config.create,
-			/*accessController (object): An object, as shown in the example below, containing the key write whose value is an array of hex encoded public keys which are used to set write access to the database. ["*"] can be passed in to give write access to everyone. See the GETTING STARTED guide for more info. (Default: uses the OrbitDB identity id orbitdb.identity.id, which would give write access only to yourself)*/
-			accessController: {
-				//canAppend: (entry) => true,
-				write: ["*"]
-			},
-		}
-	)
-	console.log('db_address:')
-	console.log(db.address.toString());
-	console.log()
-	//await print_events(db);
-
-
-	console.log('load...')
-	await db.load(100);
-
-
-	//await print_events(db);
-	console.log()
-
-	// https://github.com/orbitdb/orbit-db/blob/main/API.md#replicated
-	db.events.on('replicated', async (address) =>
-	{
-		console.log('replicated.'); /*await print_events(db);*/
-	})
-
-	db.events.on('replicate', (address) =>
-		console.log('going to replicate a part of the database with a peer...'))
-
-	db.events.on('replicate.progress', (address, hash, entry, progress, have) =>
-	{
-		//console.log(`replicate.progress: ${address}, ${hash}, ${JSON.stringify(entry, null, '')}, ${progress}, ${have}`);
-		console.log(`replicate.progress: ${address}, ${hash}, ${progress}, ${have}`);
-		process_event(entry);
-	})
-
-	db.events.on('load', (dbname) =>
-		console.log('going to load the database...'))
-
-	db.events.on('load.progress', (address, hash, entry, progress, total) =>
-	{
-		if (progress % 100 == 0)
-			console.log(`load.progress: ${address}, ${hash}, ${progress} of ${total}`)
-		process_event(entry);
-	})
-
-	db.events.on('write', (address, entry, heads) =>
-	{
-		//console.log(`entry was added locally to the database: ${address}, ${JSON.stringify(entry,null,'')}, ${JSON.stringify(heads)}`);
-		console.log(`event was added locally to the database: ${JSON.stringify(entry.payload)}`);
-		process_event(entry);
-	})
-
-	db.events.on('peer', (peer) =>
-		console.log(`peer: ${peer}`))
-
-	db.events.on('closed', (dbname) =>
-		console.log('closed.'))
-
-	db.events.on('peer.exchanged', (peer, address, heads) =>
-	{
-		console.log(`peer.exchanged: ${peer}, ${JSON.stringify(address, null, '')}, ${heads}`)
-	})
-
-	db.events.on('ready', () =>
-	{
-		console.log('database is now ready to be queried.');
-	})
-
-	return db;
-}
-
 async function run()
 {
 	let config = await init_config();
 	checks = await load_checks(config);
-	let ipfs = await init_ipfs(config);
-	console.log('...');
-	let db = await init_orbitdb(config, ipfs);
 	start_http_server();
 	program_start_ts = Date.now();
 	checks.map(start_reviewing_check_results);
 	setInterval(push_alerts_out, 1000 * 60);
 	initialize_checks();
 	node_alias = config.node_alias;
-	if (node_alias)
-		await db.add({type:'alias', alias:node_alias});
-	setInterval(async () => await print_status(ipfs), 1000 * 60 * 5);
-	ipfs.config.profiles.apply('lowpower');
 }
 
 
-async function print_status(ipfs)
-{
-	//console.log( '<beep!>');
-	//await db.add({ts:moment().format()})
-	const peers = await ipfs.swarm.peers({direction: true, streams: true, verbose: true, latency: true})
-	console.log(`${peers.length} peers.`);
-	//console.log(peers);
-	console.log('db_address:')
-	console.log(db.address.toString());
-}
 
-/*
-function get_events(db)
-{
-	return db.iterator({limit: -1}).collect();
-}
-*/
-/*async function print_events()
-{
-	console.log()
-	console.log('items:')
-	//const events = get_events(db);
-	events.map((e) =>
-	{
-		console.log({
-			source: e.identity.id,
-			value: e.payload.value
-		});
-	});
-	console.log('(' + events.length + ')')
-}
-*/
+
+
+
+
+
 
 (async () =>
 {
@@ -381,6 +163,13 @@ function start_http_server()
 	})
 
 }
+
+
+
+
+
+
+
 
 function initialize_checks()
 {

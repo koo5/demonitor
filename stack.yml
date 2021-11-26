@@ -6,21 +6,21 @@ services:
   checker:
     image: koo5/checker:latest
     networks:
-      - frontend
+      - default
     deploy:
       replicas: 1
       restart_policy:
         condition: any
 
  
-  echo:
-    image: koo5/echo:latest
-    networks:
-      - frontend
-    deploy:
-      replicas: 1
-      restart_policy:
-        condition: any
+#  echo:
+#    image: koo5/echo:latest
+#    networks:
+#      - default
+#    deploy:
+#      replicas: 1
+#      restart_policy:
+#        condition: any
 
  
   alertmanager:
@@ -29,7 +29,7 @@ services:
       - "alertmanager_storage:/alertmanager"
       - "alertmanager_etc:/etc/alertmanager"
     networks:
-      - frontend
+      - default
     ports:
       - "9093:9093"
     deploy:
@@ -45,7 +45,7 @@ services:
     environment:
       ALERTMANAGER_URI: "http://alertmanager:9093"
     networks:
-      - frontend
+      - default
     ports:
       - "9094:8080"
     deploy:
@@ -60,13 +60,13 @@ services:
     image: koo5/demonitor:latest
     volumes:
       - "./demonitor/config.aml:/usr/src/app/demonitor/config.aml"
-      - "jsipfs:/usr/src/app/ipfs"
+      #- "jsipfs:/usr/src/app/ipfs"
       - "orbitdb:/usr/src/app/orbitdb"
     environment:
       ALERTMANAGER_URL: "http://alertmanager:9093"
 #      DEBUG: "*"
     networks:
-      - frontend
+      - default
     ports:
       - "3223:3223"
 #      - "4002:4002"
@@ -79,16 +79,40 @@ services:
       - karma
       - ipfs
 
- 
+
+  solomonitor:
+    image: koo5/solomonitor:latest
+    volumes:
+      - "./demonitor/config.aml:/usr/src/app/demonitor/config.aml"
+    environment:
+      ALERTMANAGER_URL: "http://alertmanager:9093"
+#      DEBUG: "*"
+    networks:
+      - default
+    ports:
+      - "3223:3223"
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: any
+    depends_on:
+      - karma
+
+
   ipfs:
     image: ipfs/go-ipfs:latest
     volumes:
+
+
+      # is that needed?
       - ipfs_staging:/export
+
+
       - ipfs_data:/data/ipfs
     #environment:
       #IPFS_SWARM_KEY_FILE: /run/secrets/swarm.key
     networks:
-      - frontend
+      - default
     ports:
       - "4001:4001"
 #      - "5002:8080"
@@ -99,12 +123,12 @@ services:
 
 
 networks:
-  frontend:
+  default:
 
 
 volumes:
   orbitdb:
-  jsipfs:
+  #jsipfs:
   ipfs_staging:
   ipfs_data:
   alertmanager_storage:

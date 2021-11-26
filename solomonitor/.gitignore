@@ -1,0 +1,10 @@
+config.aml
+node_modules/
+orbitdb/
+ipfs
+private
+.env
+
+isolate-*
+
+

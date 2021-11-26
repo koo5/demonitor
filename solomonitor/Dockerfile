@@ -14,8 +14,8 @@ WORKDIR /usr/src/app/utils
 COPY utils/package*.json /usr/src/app/utils/
 RUN npm install
 
-WORKDIR /usr/src/app/demonitor
-COPY demonitor/package*.json /usr/src/app/demonitor/
+WORKDIR /usr/src/app/solomonitor
+COPY solomonitor/package*.json /usr/src/app/solomonitor/
 RUN npm install
 
 
@@ -24,14 +24,12 @@ RUN apk del .build-deps
 RUN apk add bash
 
 COPY utils /usr/src/app/utils
-COPY demonitor/src src
-COPY demonitor/start.sh /
+COPY solomonitor/src src
+COPY solomonitor/start.sh /
 
 VOLUME /usr/src/app/demonitor/config.aml
 
 EXPOSE 3223
-EXPOSE 4002
-EXPOSE 4003
 
 CMD ["/start.sh"]
 

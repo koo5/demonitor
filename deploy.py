@@ -17,8 +17,10 @@ os.chdir(os.path.dirname(sys.argv[0]))
 
 stack_name = 'damk'
 
+
 @click.command()
-def run():
+@click.option('-s', '--solo_node', type=bool, 	default=True, help="avoid IPFS and just run checks locally")
+def run(**options):
 	shell('docker stack rm '+ stack_name)
 
 	cnf = 'demonitor/config.aml'
@@ -28,9 +30,9 @@ def run():
 	subprocess.check_call(
 		shlex.split('docker build -t  "koo5/checker"  -f "checker/Dockerfile" .'))
 
-	subprocess.check_call(
-		shlex.split('docker build -t  "koo5/echo"  -f "./Dockerfile" .'),
-		cwd='echo')
+	#subprocess.check_call(
+	#	shlex.split('docker build -t  "koo5/echo"  -f "./Dockerfile" .'),
+	#	cwd='echo')
 
 	subprocess.check_call(
 		shlex.split('docker build -t  "koo5/karma"  -f "karma/Dockerfile" .'))
@@ -39,8 +41,12 @@ def run():
 		shlex.split('docker build -t  "koo5/alertmanager"  -f "./Dockerfile" .'),
 		cwd='alertmanager')
 		
-	subprocess.check_call(
-		shlex.split('docker build -t  "koo5/demonitor"  -f "demonitor/Dockerfile" .'))
+	if options['solo_node']:
+		subprocess.check_call(
+			shlex.split('docker build -t  "koo5/solomonitor"  -f "solomonitor/Dockerfile" .'))
+	else:
+		subprocess.check_call(
+			shlex.split('docker build -t  "koo5/demonitor"  -f "demonitor/Dockerfile" .'))
 
 	while True:
 		cmdxxx = "docker network ls | grep " + stack_name
@@ -51,9 +57,31 @@ def run():
 			break
 		time.sleep(1)
 
-	shell('docker stack deploy --prune --compose-file stack.yml ' + stack_name)
-
+	shell('docker stack deploy --prune --compose-file ' + generate_stack_file(options) + ' ' + stack_name)
+	shell('docker stack ps ' + stack_name + ' --no-trunc')
 	shell('./follow_logs.sh ' + stack_name)
+
+
+
+def generate_stack_file(options):
+	with open('docker_stack_template.yml') as file_in:
+		src = yaml.load(file_in, Loader=yaml.FullLoader)
+		fn = 'docker_stack_tweaked.yml'
+	with open(fn, 'w') as file_out:
+		yaml.dump(tweaked_services(src, options), file_out)
+	return fn
+
+
+def tweaked_services(src, options):
+	res = deepcopy(src)
+	services = res['services']
+	if options['solo_node']:
+		del services['demonitor']
+		del services['ipfs']
+	else:
+		del services['solomonitor']
+	return res
+
 
 
 def shell(cmd):
