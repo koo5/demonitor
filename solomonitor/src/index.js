@@ -1,5 +1,7 @@
 'use strict';
 
+/*unfinished version with ipfs torn out */
+
 
 var checks_module = require('./checks');
 
