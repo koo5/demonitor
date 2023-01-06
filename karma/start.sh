@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
 set -xv
-/wait-for-it/wait-for-it.sh alertmanager:9093 -t 300
+/wait-for-it/wait-for-it.sh alertmanager:9093 -t 0
 /karma

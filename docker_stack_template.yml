@@ -60,7 +60,6 @@ services:
     image: koo5/demonitor:latest
     volumes:
       - "./demonitor/config.aml:/usr/src/app/demonitor/config.aml"
-      #- "jsipfs:/usr/src/app/ipfs"
       - "orbitdb:/usr/src/app/orbitdb"
     environment:
       ALERTMANAGER_URL: "http://alertmanager:9093"
@@ -102,23 +101,12 @@ services:
   ipfs:
     image: ipfs/go-ipfs:latest
     volumes:
-
-
-      # is that needed?
-      - ipfs_staging:/export
-
-
       - ipfs_data:/data/ipfs
-    #environment:
-      #IPFS_SWARM_KEY_FILE: /run/secrets/swarm.key
     networks:
       - default
     ports:
       - "4001:4001"
-#      - "5002:8080"
       - "5001:5001"
-    #secrets:
-    #  - IPFS_SWARM_KEY_FILE
     command: daemon --migrate=true --enable-pubsub-experiment
 
 
@@ -128,14 +116,13 @@ networks:
 
 volumes:
   orbitdb:
-  #jsipfs:
   ipfs_staging:
   ipfs_data:
   alertmanager_storage:
   alertmanager_etc:
 
 
-#secrets:
-#  IPFS_SWARM_KEY_FILE:
-#    file: secrets/swarm.key
+secrets:
+  CHECKER_SECRETS:
+    file: secrets/CHECKER_SECRETS
 
