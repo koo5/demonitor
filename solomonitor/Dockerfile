@@ -11,7 +11,8 @@ RUN npm -v
 
 
 WORKDIR /usr/src/app/utils
-COPY utils/package*.json /usr/src/app/utils/
+COPY utils/* /usr/src/app/utils/
+#COPY utils/package*.json /usr/src/app/utils/
 RUN npm install
 
 WORKDIR /usr/src/app/solomonitor
@@ -23,7 +24,7 @@ RUN apk del .build-deps
 
 RUN apk add bash
 
-COPY utils /usr/src/app/utils
+COPY utils/* /usr/src/app/utils/
 COPY solomonitor/src src
 COPY solomonitor/start.sh /
 

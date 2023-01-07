@@ -27,6 +27,7 @@ def run(**options):
 	if not os.path.isfile(cnf):
 		shutil.copyfile('demonitor/config_example.aml', cnf)
 
+	print('checker...')
 	subprocess.check_call(
 		shlex.split('docker build -t  "koo5/checker"  -f "checker/Dockerfile" .'))
 
@@ -34,17 +35,21 @@ def run(**options):
 	#	shlex.split('docker build -t  "koo5/echo"  -f "./Dockerfile" .'),
 	#	cwd='echo')
 
+	print('karma...')
 	subprocess.check_call(
 		shlex.split('docker build -t  "koo5/karma"  -f "karma/Dockerfile" .'))
 		
+	print('alertmanager...')
 	subprocess.check_call(
 		shlex.split('docker build -t  "koo5/alertmanager"  -f "./Dockerfile" .'),
 		cwd='alertmanager')
 		
 	if options['solo_node']:
+		print('solomonitor...')
 		subprocess.check_call(
 			shlex.split('docker build -t  "koo5/solomonitor"  -f "solomonitor/Dockerfile" .'))
 	else:
+		print('demonitor...')
 		subprocess.check_call(
 			shlex.split('docker build -t  "koo5/demonitor"  -f "demonitor/Dockerfile" .'))
 

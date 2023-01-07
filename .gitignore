@@ -1,3 +1,4 @@
 secrets
 node_modules
 .idea
+docker_stack_tweaked.yml

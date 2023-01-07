@@ -6,10 +6,6 @@ var indexRouter = require('./routes/index');
 
 
 var app = express();
-/*  app.setTimeout(60000*60, (e) => {
-  console.log('socket timeout:')
-  console.log(e)
-})*/
 
 
 app.use(logger('dev'));
