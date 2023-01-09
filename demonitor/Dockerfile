@@ -11,19 +11,20 @@ RUN npm -v
 
 
 WORKDIR /usr/src/app/utils
-COPY utils/package*.json /usr/src/app/utils/
+#COPY utils/package*.json /usr/src/app/utils/
+COPY utils/* /usr/src/app/utils/
 RUN npm install
 
 WORKDIR /usr/src/app/demonitor
 COPY demonitor/package*.json /usr/src/app/demonitor/
-RUN npm install
+RUN npm install -v
 
 
 RUN apk del .build-deps
 
 RUN apk add bash
 
-COPY utils /usr/src/app/utils
+COPY utils/* /usr/src/app/utils/
 COPY demonitor/src src
 COPY demonitor/start.sh /
 

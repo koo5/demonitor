@@ -108,6 +108,10 @@ services:
       - "4001:4001"
       - "5001:5001"
     command: daemon --migrate=true --enable-pubsub-experiment
+    #secrets:
+    #  - IPFS_SWARM_KEY #see: https://docs.ipfs.tech/how-to/run-ipfs-inside-docker/#private-swarms-inside-docker
+    #environment:
+    #  IPFS_SWARM_KEY_FILE: /run/secrets/IPFS_SWARM_KEY
 
 
 networks:
@@ -125,4 +129,5 @@ volumes:
 secrets:
   CHECKER_SECRETS:
     file: secrets/CHECKER_SECRETS
-
+#  IPFS_SWARM_KEY:
+#    file: secrets/swarm.key
